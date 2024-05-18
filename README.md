@@ -16,3 +16,5 @@ Fund raising platform that allows users to create a fund raiser or donate to oth
 3. If goal is not reached - allow creator to extend and allow donors to either withdraw, or to donate anyways.
 
 4. Distribute project tokens (an ERC20 token - OpenZeppelin ERC20) to contributors as rewards.
+
+5. Decide on rewards...
