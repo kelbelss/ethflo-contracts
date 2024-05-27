@@ -8,3 +8,6 @@ pragma solidity ^0.8.19;
  * @dev
  */
 contract Crowdfund {}
+
+// GO SLOW AND TEST AS YOU GO
+// CEI: Checks, Effects, Interactions
