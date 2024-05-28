@@ -7,9 +7,9 @@
 Fund raising platform that allows users to create a fund raiser or donate to other users and gain ERC20 tokens as rewards in proportion to their contribution. 
 
 
-## What do we want it to do?
+## What do I want it to do?
 
-1. Create creatFundraiser() Function with a goal and a deadline. Have a struct for Fundraisers and an array of creator addresses which can be mapped to the fundraisers. 
+1. Create createFundraiser() Function with a goal and a deadline. Have a struct for Fundraisers and an array of creator addresses which can be mapped to the fundraisers. 
 
 2. Verify fundraisers to prevent sybil attacks farming ERC20 token reward - 10% fee for unverified, 2% fee for verified.
    
