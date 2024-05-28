@@ -21,5 +21,13 @@ contract Crowdfund {
 
     Fundraiser[] public listOfFundraisers;
 
-    function createFundraiser(string memory _name, uint256 _duration, uint256 _goal) external {}
+    mapping(address s_creator => uint256 Fundraiser) private s_creatorAddrToFundraiser;
+
+    function createFundraiser(string memory _name, uint256 _duration, uint256 _goal) external {
+        // Push parameters to Fundraiser array
+        listOfFundraisers.push(Fundraiser(_name, _duration, _goal));
+
+        // Add creator address to array
+        s_creator.push(payable(msg.sender));
+    }
 }
