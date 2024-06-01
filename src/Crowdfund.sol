@@ -30,4 +30,6 @@ contract Crowdfund {
         // Add creator address to array
         s_creator.push(payable(msg.sender));
     }
+
+    // Sort out verification
 }
