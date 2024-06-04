@@ -29,23 +29,37 @@ contract Crowdfund {
         listOfFundraisers.push(Fundraiser(_creatorAddr, _name, _deadline, _goal));
     }
 
-    function creatorVerification() public {
+    function setCreatorVerification() public {
         // set up verification to prevent sybil attacks - 10% fee for unverified, 2% fee for verified
+        // true or false
+        // Make 5% fee for V1
     }
 
     function donate() public {
-        // TODO: mint tokens to donators in proportion to donation - only mint when goal is reached
-    }
-
-    function creatorWithdraw() public { // only creator
         /**
-         * TODO: check user has reached goal at/before deadline
-         *     if goal not reached - allow creator to extend and allow donors to either withdraw, or to donate anyways.
-         *     deduct fee - 10% for unverified, 2% for verified
+         * TODO: set minimum donation amount
+         * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
+         *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
+         *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
+         * yield function
          */
     }
 
-    function donorWithdraw() public {
-        // allow donor to withdraw if goal is not reached
+    function yieldStuff() internal {}
+
+    function creatorWithdraw() public { // only creator
+        /**
+         * TODO: check user has reached goal at deadline
+         *     deduct fee - 10% for unverified, 2% for verified - 5% for V1
+         *     calculate split of yield amount - V1 admin gets 100%
+         */
+    }
+
+    function claimRewardForSuccessfulFundraiser() public {
+        // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
+    }
+
+    function withdrawDonationFromUnsuccessfulFundraiser() public {
+        // return amount to donor if deadline not reached - claim refund (so they pay gas)
     }
 }
