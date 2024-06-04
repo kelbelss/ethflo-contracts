@@ -11,25 +11,41 @@ contract Crowdfund {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
-    address payable[] private s_creator;
-
     struct Fundraiser {
+        address creatorAddr;
         string name;
-        uint256 duration;
+        uint256 deadline;
         uint256 goal;
     }
 
     Fundraiser[] public listOfFundraisers;
 
-    mapping(address s_creator => uint256 Fundraiser) private s_creatorAddrToFundraiser;
+    // constructor() erc20 - set up
 
-    function createFundraiser(string memory _name, uint256 _duration, uint256 _goal) external {
+    function createFundraiser(address _creatorAddr, string memory _name, uint256 _deadline, uint256 _goal) external {
+        // TODO: check if address already has a fundraiser
+
         // Push parameters to Fundraiser array
-        listOfFundraisers.push(Fundraiser(_name, _duration, _goal));
-
-        // Add creator address to array
-        s_creator.push(payable(msg.sender));
+        listOfFundraisers.push(Fundraiser(_creatorAddr, _name, _deadline, _goal));
     }
 
-    // Sort out verification
+    function creatorVerification() public {
+        // set up verification to prevent sybil attacks - 10% fee for unverified, 2% fee for verified
+    }
+
+    function donate() public {
+        // TODO: mint tokens to donators in proportion to donation - only mint when goal is reached
+    }
+
+    function creatorWithdraw() public { // only creator
+        /**
+         * TODO: check user has reached goal at/before deadline
+         *     if goal not reached - allow creator to extend and allow donors to either withdraw, or to donate anyways.
+         *     deduct fee - 10% for unverified, 2% for verified
+         */
+    }
+
+    function donorWithdraw() public {
+        // allow donor to withdraw if goal is not reached
+    }
 }
