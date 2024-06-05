@@ -9,9 +9,9 @@ Fund raising platform that allows users to create a fund raiser or donate to oth
 
 ## What do I want it to do?
 
-1. Create createFundraiser() Function with a goal, a deadline and a name. Have a struct for Fundraisers with creator address, name of fundraiser, goal and deadline. Check if creator already has a fundraiser. 
+1. Create createFundraiser() Function with a goal, and a deadline. Add ID to each fundraiser. Add checks for deadline and goals.
 
-2. donate() - set minimum donate amount, add mapping of donor and their amount for that fundraiser, add funds to yield amount.
+2. donate() - set minimum donate amount, add mapping of donor and their amount for that fundraiser, add funds to yield amount. Use USDT.
    
 3. Donor money - add funds to general Aave pot to earn yield until deadline. 
    
