@@ -11,6 +11,9 @@ contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
+    error EthFlo_DeadlineError();
+    error EthFlo_GoalError();
+
     uint256 s_fundraiserCount;
 
     struct Fundraiser {
@@ -24,6 +27,16 @@ contract EthFlo {
     // constructor() erc20 - set up
 
     function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external {
+        // Checks
+
+        if (_deadline < 5 || _deadline > 90) {
+            revert EthFlo_DeadlineError();
+        }
+
+        if (_goal < 10 || _goal > 100000000) {
+            revert EthFlo_GoalError();
+        }
+
         uint256 id = s_fundraiserCount;
         ++id;
 
@@ -32,7 +45,7 @@ contract EthFlo {
         s_fundraiserCount = id;
 
         /**
-         * TODO: Add checks for deadline and goal - deadline < 90 days. Goal $10 - $100m
+         * TODO: Add checks for deadline and goal - deadline 5 - 90 days. Goal $10 - $100m
          */
     }
 
