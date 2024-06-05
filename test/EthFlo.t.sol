@@ -19,4 +19,10 @@ contract EthFloTest is Test {
         vm.startPrank(CREATOR);
         ethFlo.createFundraiser(CREATOR, DEADLINE, GOAL);
     }
+
+    function test_createFundraiser_success() {}
+
+    function test_createFundraiser_fail_DeadlineError() {}
+
+    function test_createFundraiser_fail_GoalError() {}
 }
