@@ -8,7 +8,6 @@ contract EthFloTest is Test {
     EthFlo ethFlo;
 
     address public CREATOR = makeAddr("creator");
-    string constant NAME = "TesterFundraiser";
     uint256 constant DEADLINE = 0; // figure out times
     uint256 constant GOAL = 1 ether;
 
@@ -18,6 +17,6 @@ contract EthFloTest is Test {
 
     function testCreateFundraiser() public {
         vm.startPrank(CREATOR);
-        ethFlo.createFundraiser(CREATOR, NAME, DEADLINE, GOAL);
+        ethFlo.createFundraiser(CREATOR, DEADLINE, GOAL);
     }
 }
