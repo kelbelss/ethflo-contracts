@@ -2,10 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {Crowdfund} from "../src/Crowdfund.sol";
+import {EthFlo} from "../src/EthFlo.sol";
 
-contract CrowdfundTest is Test {
-    Crowdfund crowdfund;
+contract EthFloTest is Test {
+    EthFlo ethFlo;
 
     address public CREATOR = makeAddr("creator");
     string constant NAME = "TesterFundraiser";
@@ -13,11 +13,11 @@ contract CrowdfundTest is Test {
     uint256 constant GOAL = 1 ether;
 
     function setUp() public {
-        crowdfund = new Crowdfund();
+        ethFlo = new EthFlo();
     }
 
     function testCreateFundraiser() public {
         vm.startPrank(CREATOR);
-        crowdfund.createFundraiser(CREATOR, NAME, DEADLINE, GOAL);
+        ethFlo.createFundraiser(CREATOR, NAME, DEADLINE, GOAL);
     }
 }

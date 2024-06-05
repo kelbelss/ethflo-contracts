@@ -2,12 +2,12 @@
 pragma solidity ^0.8.19;
 
 /**
- * @title Crowdfund Contract
+ * @title EthFlo Contract
  * @author Kelly Smulian
  * @notice This contract is for creating a crowdfunding program
  * @dev
  */
-contract Crowdfund {
+contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
