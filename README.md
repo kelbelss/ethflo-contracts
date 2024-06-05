@@ -1,6 +1,6 @@
-# Crowdfunding Platform
+# EthFlo 
 
-**Crowdfunding smart contracts built with Solidity and Foundry.**
+**EthFlo, derived from the Latin word 'Efflo' meaning 'to blossom', is a crowdfunding platform which embodies the spirit of potential and growth, utilising smart contracts built with Solidity and Foundry.**
 
 ## About
 
@@ -21,6 +21,6 @@ Fund raising platform that allows users to create a fund raiser or donate to oth
 
 6. Distribute project tokens (an ERC20 token - OpenZeppelin ERC20) to donors as rewards via claim - claimRewardForSuccessfulFundraiser().
 
-7. Decide on rewards... badges, perks?
+7. Decide on rewards... badges, perks, yield cut?
 
 8. V2 - allow fundraisers to mint their own token and donors can decide between crowdfund token or fundraiser token. Another V2 option - allow fundraisers to extend period if goal not reached and donors can decide to remove donation or not. V2 - setCreatorVerification() - Verify fundraisers to prevent sybil attacks farming ERC20 token reward - 10% fee for unverified, 2% fee for verified.
