@@ -11,29 +11,37 @@ contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
+    uint256 s_fundraiserCount;
+
     struct Fundraiser {
         address creatorAddr;
-        string name;
         uint256 deadline;
         uint256 goal;
     }
 
-    Fundraiser[] public listOfFundraisers;
+    // Fundraiser[] public listOfFundraisers;
+
+    mapping(uint256 fundraiserId => Fundraiser) public fundraisers;
+    // mapping(address creator => uint256 fundraiserId) public creatorToFundraiserId;
+
+    // if(creatorToFundraiserId[msg.sender] > 0) revert YouAlreadyHaveOneLol();
 
     // constructor() erc20 - set up
 
-    function createFundraiser(address _creatorAddr, string memory _name, uint256 _deadline, uint256 _goal) external {
-        // TODO: check if address already has a fundraiser
+    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external {
+        uint256 id = s_fundraiserCount;
+        ++id;
 
-        // Push parameters to Fundraiser array
-        listOfFundraisers.push(Fundraiser(_creatorAddr, _name, _deadline, _goal));
+        fundraisers[id] = Fundraiser(_creatorAddr, _deadline, _goal);
+
+        s_fundraiserCount = id;
     }
 
-    function setCreatorVerification() public {
-        // set up verification to prevent sybil attacks - 10% fee for unverified, 2% fee for verified
-        // true or false
-        // Make 5% fee for V1
-    }
+    // function setCreatorVerification() public {
+    // set up verification to prevent sybil attacks - 10% fee for unverified, 2% fee for verified
+    // true or false
+    // Make 5% fee for V1
+    // }
 
     function donate() public {
         /**
