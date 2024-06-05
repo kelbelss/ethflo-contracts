@@ -19,12 +19,7 @@ contract EthFlo {
         uint256 goal;
     }
 
-    // Fundraiser[] public listOfFundraisers;
-
     mapping(uint256 fundraiserId => Fundraiser) public fundraisers;
-    // mapping(address creator => uint256 fundraiserId) public creatorToFundraiserId;
-
-    // if(creatorToFundraiserId[msg.sender] > 0) revert YouAlreadyHaveOneLol();
 
     // constructor() erc20 - set up
 
@@ -35,17 +30,16 @@ contract EthFlo {
         fundraisers[id] = Fundraiser(_creatorAddr, _deadline, _goal);
 
         s_fundraiserCount = id;
-    }
 
-    // function setCreatorVerification() public {
-    // set up verification to prevent sybil attacks - 10% fee for unverified, 2% fee for verified
-    // true or false
-    // Make 5% fee for V1
-    // }
+        /**
+         * TODO: Add checks for deadline and goal - deadline < 90 days. Goal $10 - $100m
+         */
+    }
 
     function donate() public {
         /**
-         * TODO: set minimum donation amount
+         * TODO: import USDT contracts
+         * set minimum donation amount
          * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
          *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
          *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
