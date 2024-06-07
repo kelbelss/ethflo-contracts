@@ -14,7 +14,9 @@ contract EthFlo {
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
 
-    uint256 s_fundraiserCount;
+    event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
+
+    uint256 public s_fundraiserCount;
 
     struct Fundraiser {
         address creatorAddr;
@@ -26,10 +28,10 @@ contract EthFlo {
 
     // constructor() erc20 - set up
 
-    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external {
-        // Checks
+    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external returns (uint256) {
+        // Checks for deadline and goal
 
-        if (_deadline < 5 || _deadline > 90) {
+        if (_deadline < 5 days || _deadline > 90 days) {
             revert EthFlo_DeadlineError();
         }
 
@@ -44,9 +46,9 @@ contract EthFlo {
 
         s_fundraiserCount = id;
 
-        /**
-         * TODO: Add checks for deadline and goal - deadline 5 - 90 days. Goal $10 - $100m
-         */
+        emit CreateFundraiser(_creatorAddr, _deadline, _goal);
+
+        return id;
     }
 
     function donate() public {
