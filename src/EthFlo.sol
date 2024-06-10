@@ -15,6 +15,7 @@ contract EthFlo {
 
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
+    error EthFlo_FundraiserDoesNotExist();
     error EthFlo_FundraiserDeadlineHasPassed();
     error EthFlo_MinimumDonationNotExceeded();
 
@@ -70,7 +71,6 @@ contract EthFlo {
          * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
          *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
          *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
-         * yield function
          */
 
         //  donor projects mapping - address to array of id projects donated too
@@ -78,12 +78,17 @@ contract EthFlo {
 
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
-        // Checks: 1. if fundraiser is still active
+        // Checks: 1. if fundraiser exists
+        if (selectedFundraiser.goal < MIN_GOAL) {
+            revert EthFlo_FundraiserDoesNotExist();
+        }
+
+        // Checks: 2. if fundraiser is still active
         if (block.timestamp > selectedFundraiser.deadline) {
             revert EthFlo_FundraiserDeadlineHasPassed();
         }
 
-        // Checks: 2. if minimum amount is reached
+        // Checks: 3. if minimum amount is reached
         if (_amountDonated < MINIMUM_DONATION) {
             revert EthFlo_MinimumDonationNotExceeded();
         }
