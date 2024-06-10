@@ -12,7 +12,7 @@ contract EthFloTest is Test {
     // uint256 constant GOAL = 15;
 
     function setUp() public {
-        ethFlo = new EthFlo();
+        ethFlo = new EthFlo(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     }
 
     // createFundraiser TESTS
