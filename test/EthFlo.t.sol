@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.22;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {EthFlo} from "../src/EthFlo.sol";
@@ -8,15 +8,43 @@ contract EthFloTest is Test {
     EthFlo ethFlo;
 
     address public CREATOR = makeAddr("creator");
-    uint256 constant DEADLINE = 0; // figure out times
-    uint256 constant GOAL = 1 ether;
+    // uint256 constant DEADLINE = 6 days;
+    // uint256 constant GOAL = 15;
 
     function setUp() public {
-        ethFlo = new EthFlo();
+        ethFlo = new EthFlo(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     }
 
-    function testCreateFundraiser() public {
+    // createFundraiser TESTS
+
+    function test_createFundraiser_success() public {
         vm.startPrank(CREATOR);
-        ethFlo.createFundraiser(CREATOR, DEADLINE, GOAL);
+        uint256 id = ethFlo.createFundraiser({_creatorAddr: CREATOR, _deadline: 6 days, _goal: 50});
+
+        // check variables were set correctly
+
+        (address _creator, uint256 _deadline, uint256 _goal) = ethFlo.fundraisers(id);
+
+        assertEq(_creator, CREATOR, "Creator not set correctly");
+        assertEq(_deadline, 6 days, "Deadline not set correctly");
+        assertEq(_goal, 50, "Goal not set correctly");
+    }
+
+    function test_event_createFundraiser_success() public {
+        vm.expectEmit(true, false, false, true);
+        emit EthFlo.CreateFundraiser(CREATOR, 6 days, 50);
+        ethFlo.createFundraiser(CREATOR, 6 days, 50);
+    }
+
+    function test_createFundraiser_fail_DeadlineError() public {
+        vm.startPrank(CREATOR);
+        vm.expectRevert(EthFlo.EthFlo_DeadlineError.selector);
+        ethFlo.createFundraiser(CREATOR, 4 days, 50);
+    }
+
+    function test_createFundraiser_fail_GoalError() public {
+        vm.startPrank(CREATOR);
+        vm.expectRevert(EthFlo.EthFlo_GoalError.selector);
+        ethFlo.createFundraiser(CREATOR, 6 days, 9);
     }
 }
