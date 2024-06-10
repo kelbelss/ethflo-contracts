@@ -16,10 +16,6 @@ contract EthFlo {
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
 
-    event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
-
-    uint256 public s_fundraiserCount;
-
     struct Fundraiser {
         address creatorAddr;
         uint256 deadline;
@@ -27,8 +23,14 @@ contract EthFlo {
     }
 
     mapping(uint256 fundraiserId => Fundraiser) public fundraisers;
+    uint256 public s_fundraiserCount;
+    IERC20 public immutable USDT;
 
-    // constructor() erc20 - set up
+    event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
+
+    constructor(address _usdtAddress) {
+        USDT = IERC20(_usdtAddress);
+    }
 
     function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
