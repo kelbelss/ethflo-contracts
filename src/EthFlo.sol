@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.22;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title EthFlo Contract
@@ -11,7 +13,11 @@ contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
-    uint256 s_fundraiserCount;
+    error EthFlo_DeadlineError();
+    error EthFlo_GoalError();
+    error EthFlo_FundraiserDoesNotExist();
+    error EthFlo_FundraiserDeadlineHasPassed();
+    error EthFlo_MinimumDonationNotExceeded();
 
     struct Fundraiser {
         address creatorAddr;
@@ -19,11 +25,34 @@ contract EthFlo {
         uint256 goal;
     }
 
-    mapping(uint256 fundraiserId => Fundraiser) public fundraisers;
+    mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
 
-    // constructor() erc20 - set up
+    uint256 public constant MIN_GOAL = 10e6; // $10
+    uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
+    uint256 public constant MINIMUM_DONATION = 10000000; // $10
+    IERC20 public immutable USDT;
+    uint256 public s_fundraiserCount;
 
-    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external {
+    event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
+    event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
+
+    constructor(address _usdtAddress) {
+        USDT = IERC20(_usdtAddress);
+    }
+
+    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external returns (uint256) {
+        // Checks for deadline and goal
+
+        uint256 duration = _deadline - block.timestamp;
+
+        if (duration < 5 days || duration > 90 days) {
+            revert EthFlo_DeadlineError();
+        }
+
+        if (_goal < MIN_GOAL || _goal > MAX_GOAL) {
+            revert EthFlo_GoalError();
+        }
+
         uint256 id = s_fundraiserCount;
         ++id;
 
@@ -31,20 +60,48 @@ contract EthFlo {
 
         s_fundraiserCount = id;
 
-        /**
-         * TODO: Add checks for deadline and goal - deadline < 90 days. Goal $10 - $100m
-         */
+        emit CreateFundraiser(_creatorAddr, _deadline, _goal);
+
+        return id;
     }
 
-    function donate() public {
+    function donate(uint256 _fundraiserId, uint256 _amountDonated) external payable {
         /**
-         * TODO: import USDT contracts
-         * set minimum donation amount
+         * TODO:
          * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
          *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
          *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
-         * yield function
          */
+
+        //  donor projects mapping - address to array of id projects donated too
+        // other mapping -> above mapping and then to amount
+
+        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+
+        // Checks: 1. if fundraiser exists
+        if (selectedFundraiser.goal < MIN_GOAL) {
+            revert EthFlo_FundraiserDoesNotExist();
+        }
+
+        // Checks: 2. if fundraiser is still active
+        if (block.timestamp > selectedFundraiser.deadline) {
+            revert EthFlo_FundraiserDeadlineHasPassed();
+        }
+
+        // Checks: 3. if minimum amount is reached
+        if (_amountDonated < MINIMUM_DONATION) {
+            revert EthFlo_MinimumDonationNotExceeded();
+        }
+
+        // Mapping - donors personal donations lis with ID and amounts
+
+        // Mapping - fundraisers list of donors with amount
+
+        // Recieve funds
+        USDT.transferFrom(msg.sender, address(this), _amountDonated); // Emits a {Transfer} event.
+
+        // Event
+        emit Donation(msg.sender, _fundraiserId, _amountDonated);
     }
 
     function yieldStuff() internal {}
