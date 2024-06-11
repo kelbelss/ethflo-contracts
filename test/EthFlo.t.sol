@@ -27,9 +27,9 @@ contract EthFloTest is Test {
         deal(address(USDT), DONOR, 100e6);
     }
 
-    function _createFunctionForTests(address creator, uint256 deadline, uint256 goal) internal {
+    function _createFunctionForTests(uint256 deadline, uint256 goal) internal {
         vm.startPrank(CREATOR);
-        ethFlo.createFundraiser({_creatorAddr: creator, _deadline: deadline, _goal: goal});
+        ethFlo.createFundraiser({_deadline: deadline, _goal: goal});
         vm.stopPrank();
     }
 
@@ -37,7 +37,7 @@ contract EthFloTest is Test {
 
     function test_createFundraiser_success() public {
         vm.startPrank(CREATOR);
-        uint256 id = ethFlo.createFundraiser({_creatorAddr: CREATOR, _deadline: block.timestamp + 6 days, _goal: 50e6});
+        uint256 id = ethFlo.createFundraiser({_deadline: block.timestamp + 6 days, _goal: 50e6});
 
         // check variables were set correctly
 
@@ -51,19 +51,20 @@ contract EthFloTest is Test {
     function test_createFundraiser_fail_DeadlineError() public {
         vm.startPrank(CREATOR);
         vm.expectRevert(EthFlo.EthFlo_DeadlineError.selector);
-        ethFlo.createFundraiser(CREATOR, block.timestamp + 4 days, 50e6);
+        ethFlo.createFundraiser(block.timestamp + 4 days, 50e6);
     }
 
     function test_createFundraiser_fail_GoalError() public {
         vm.startPrank(CREATOR);
         vm.expectRevert(EthFlo.EthFlo_GoalError.selector);
-        ethFlo.createFundraiser(CREATOR, block.timestamp + 6 days, 9e6);
+        ethFlo.createFundraiser(block.timestamp + 6 days, 9e6);
     }
 
     function test_event_createFundraiser_success() public {
         vm.expectEmit(true, false, false, true);
+        vm.startPrank(CREATOR);
         emit EthFlo.CreateFundraiser(CREATOR, block.timestamp + 6 days, 50e6);
-        ethFlo.createFundraiser(CREATOR, block.timestamp + 6 days, 50e6);
+        ethFlo.createFundraiser(block.timestamp + 6 days, 50e6);
     }
 
     // donate TESTS
@@ -71,11 +72,11 @@ contract EthFloTest is Test {
     function test_donate_fail_EthFlo_FundraiserDoesNotExist() public {
         vm.startPrank(DONOR);
         vm.expectRevert(EthFlo.EthFlo_FundraiserDoesNotExist.selector);
-        ethFlo.donate(3, 20e6);
+        ethFlo.donate(1, 0);
     }
 
     function test_donate_fail_EthFlo_FundraiserDeadlineHasPassed() public {
-        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
         vm.warp(30e12);
 
         vm.startPrank(DONOR);
@@ -85,7 +86,7 @@ contract EthFloTest is Test {
     }
 
     function test_donate_fail_EthFlo_MinimumDonationNotMet() public {
-        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
 
         vm.startPrank(DONOR);
         USDT.forceApprove(address(ethFlo), 20e6);
@@ -94,18 +95,18 @@ contract EthFloTest is Test {
     }
 
     function test_donate_receiveDonation_success() public {
-        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 0);
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 25e6);
-        ethFlo.donate(1, 25e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        USDT.forceApprove(address(ethFlo), 35e6);
+        ethFlo.donate(1, 35e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
     }
 
     function test_event_donate_success() public {
-        _createFunctionForTests(CREATOR, block.timestamp + 60 days, 15e6);
+        _createFunctionForTests(block.timestamp + 60 days, 15e6);
 
         console.log("donors balance", USDT.balanceOf(DONOR));
 

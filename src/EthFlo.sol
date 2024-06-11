@@ -43,7 +43,7 @@ contract EthFlo {
         USDT = IERC20(_usdtAddress);
     }
 
-    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external returns (uint256) {
+    function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
 
         uint256 duration = _deadline - block.timestamp;
@@ -59,11 +59,11 @@ contract EthFlo {
         uint256 id = s_fundraiserCount;
         ++id;
 
-        fundraisers[id] = Fundraiser(_creatorAddr, _deadline, _goal);
+        fundraisers[id] = Fundraiser(msg.sender, _deadline, _goal);
 
         s_fundraiserCount = id;
 
-        emit CreateFundraiser(_creatorAddr, _deadline, _goal);
+        emit CreateFundraiser(msg.sender, _deadline, _goal);
 
         return id;
     }
@@ -82,7 +82,7 @@ contract EthFlo {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
         // Checks: 1. if fundraiser exists
-        if (selectedFundraiser.goal < MIN_GOAL) {
+        if (selectedFundraiser.goal == 0) {
             revert EthFlo_FundraiserDoesNotExist();
         }
 
