@@ -68,9 +68,21 @@ contract EthFloTest is Test {
 
     // donate TESTS
 
-    function test_donate_fail_EthFlo_FundraiserDoesNotExist() public {}
+    function test_donate_fail_EthFlo_FundraiserDoesNotExist() public {
+        vm.startPrank(DONOR);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserDoesNotExist.selector);
+        ethFlo.donate(3, 20e6);
+    }
 
-    function test_donate_fail_EthFlo_FundraiserDeadlineHasPassed() public {}
+    function test_donate_fail_EthFlo_FundraiserDeadlineHasPassed() public {
+        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
+        vm.warp(30e12);
+
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 20e6);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserDeadlineHasPassed.selector);
+        ethFlo.donate(1, 20e6);
+    }
 
     function test_donate_fail_EthFlo_MinimumDonationNotMet() public {}
 
