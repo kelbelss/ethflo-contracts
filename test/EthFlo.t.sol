@@ -82,16 +82,12 @@ contract EthFloTest is Test {
         console.log("donors balance", USDT.balanceOf(DONOR));
 
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 15e6);
 
-        // console.log(res);
+        // SafeERC20.sol
+        USDT.forceApprove(address(ethFlo), 15e6);
 
         vm.expectEmit(true, true, false, true);
         emit EthFlo.Donation(DONOR, 1, 15e6);
         ethFlo.donate(1, 15e6);
     }
 }
-
-// interface IUSDT {
-//     function approve(address _spender, uint256 _value) external;
-// }
