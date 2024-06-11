@@ -84,9 +84,25 @@ contract EthFloTest is Test {
         ethFlo.donate(1, 20e6);
     }
 
-    function test_donate_fail_EthFlo_MinimumDonationNotMet() public {}
+    function test_donate_fail_EthFlo_MinimumDonationNotMet() public {
+        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
 
-    function test_donate_receiveDonation_success() public {}
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 20e6);
+        vm.expectRevert(EthFlo.EthFlo_MinimumDonationNotMet.selector);
+        ethFlo.donate(1, 5e6);
+    }
+
+    function test_donate_receiveDonation_success() public {
+        _createFunctionForTests(CREATOR, block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+    }
 
     function test_event_donate_success() public {
         _createFunctionForTests(CREATOR, block.timestamp + 60 days, 15e6);
