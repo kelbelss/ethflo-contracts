@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title EthFlo Contract
@@ -13,11 +14,13 @@ contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
+    using SafeERC20 for IERC20;
+
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
     error EthFlo_FundraiserDoesNotExist();
     error EthFlo_FundraiserDeadlineHasPassed();
-    error EthFlo_MinimumDonationNotExceeded();
+    error EthFlo_MinimumDonationNotMet();
 
     struct Fundraiser {
         address creatorAddr;
@@ -65,7 +68,7 @@ contract EthFlo {
         return id;
     }
 
-    function donate(uint256 _fundraiserId, uint256 _amountDonated) external payable {
+    function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
         /**
          * TODO:
          * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
@@ -90,15 +93,15 @@ contract EthFlo {
 
         // Checks: 3. if minimum amount is reached
         if (_amountDonated < MINIMUM_DONATION) {
-            revert EthFlo_MinimumDonationNotExceeded();
+            revert EthFlo_MinimumDonationNotMet();
         }
 
         // Mapping - donors personal donations lis with ID and amounts
 
         // Mapping - fundraisers list of donors with amount
 
-        // Recieve funds
-        USDT.transferFrom(msg.sender, address(this), _amountDonated); // Emits a {Transfer} event.
+        // Receive funds
+        USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
         // Event
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
