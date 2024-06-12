@@ -32,6 +32,8 @@ contract EthFlo {
     mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
     mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
 
+    uint256 public constant MIN_DURATION = 5 days;
+    uint256 public constant MAX_DURATION = 90 days; // $10
     uint256 public constant MIN_GOAL = 10e6; // $10
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
@@ -50,7 +52,7 @@ contract EthFlo {
 
         uint256 duration = _deadline - block.timestamp;
 
-        if (duration < 5 days || duration > 90 days) {
+        if (duration < MIN_DURATION || duration > MAX_DURATION) {
             revert EthFlo_DeadlineError();
         }
 
