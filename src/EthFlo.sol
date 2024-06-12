@@ -21,6 +21,9 @@ contract EthFlo {
     error EthFlo_FundraiserDoesNotExist();
     error EthFlo_FundraiserDeadlineHasPassed();
     error EthFlo_MinimumDonationNotMet();
+    error EthFlo_FundraiserStillActive();
+    error EthFlo_GoalNotReached();
+    error EthFlo_IncorrectFundraiserOwner();
 
     struct Fundraiser {
         address creatorAddr;
@@ -37,11 +40,13 @@ contract EthFlo {
     uint256 public constant MIN_GOAL = 10e6; // $10
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
+    uint256 public constant ADMIN_FEE = 5; // 5%
     IERC20 public immutable USDT;
     uint256 public s_fundraiserCount;
 
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
+    event FundsWithdrawn(address indexed creatorAddr, uint256 indexed fundraiserId, uint256 amountReceived);
 
     constructor(address _usdtAddress) {
         USDT = IERC20(_usdtAddress);
@@ -108,12 +113,44 @@ contract EthFlo {
 
     function yieldStuff() internal {}
 
-    function creatorWithdraw() public { // only creator
+    function creatorWithdraw(uint256 _fundraiserId) public {
+        // only creator
         /**
          * TODO: check user has reached goal at deadline
          *     deduct fee - 10% for unverified, 2% for verified - 5% for V1
          *     calculate split of yield amount - V1 admin gets 100%
          */
+        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+
+        // Check: goal is reached by deadline
+        address creator = selectedFundraiser.creatorAddr;
+        uint256 goal = selectedFundraiser.goal;
+        uint256 deadline = selectedFundraiser.deadline;
+        uint256 amountRaised = selectedFundraiser.amountRaised;
+
+        // Checks: 1. if caller is the creator
+        if (msg.sender != creator) {
+            revert EthFlo_IncorrectFundraiserOwner();
+        }
+
+        // Checks: 2. if deadline has been reached
+        if (block.timestamp < deadline) {
+            revert EthFlo_FundraiserStillActive();
+        }
+
+        // Checks: 3. if goal is reached
+        if (amountRaised < goal) {
+            revert EthFlo_GoalNotReached();
+        }
+
+        // Deduct 5% fee
+        uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
+
+        // Send funds
+        USDT.safeTransfer(msg.sender, amountAfterFee);
+
+        // Event
+        emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
     }
 
     function claimRewardForSuccessfulFundraiser() public {
