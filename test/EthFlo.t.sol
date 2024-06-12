@@ -134,4 +134,28 @@ contract EthFloTest is Test {
     function test_creatorWithdraw_checkAdminFee_success() public {}
 
     function test_event_creatorWithdraw_success() public {}
+
+    // withdrawDonationFromUnsuccessfulFundraiser TESTS
+
+    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+
+        // withdraw donation
+        vm.warp(30e12);
+        vm.expectRevert(EthFlo.EthFlo_NotYourDonation.selector);
+        ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
+
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+        console.log("Caller address:", address(this), "does not match actual donor:", DONOR);
+    }
 }
