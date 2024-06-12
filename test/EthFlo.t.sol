@@ -41,11 +41,12 @@ contract EthFloTest is Test {
 
         // check variables were set correctly
 
-        (address _creator, uint256 _deadline, uint256 _goal) = ethFlo.fundraisers(id);
+        (address _creator, uint256 _deadline, uint256 _goal, uint256 _amountRaised) = ethFlo.fundraisers(id);
 
         assertEq(_creator, CREATOR, "Creator not set correctly");
         assertEq(_deadline, block.timestamp + 6 days, "Deadline not set correctly");
         assertEq(_goal, 50e6, "Goal not set correctly");
+        assertEq(_amountRaised, 0, "Amount raised not correct");
     }
 
     function test_createFundraiser_fail_DeadlineError() public {
