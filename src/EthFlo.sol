@@ -24,6 +24,7 @@ contract EthFlo {
     error EthFlo_FundraiserStillActive();
     error EthFlo_GoalNotReached();
     error EthFlo_IncorrectFundraiserOwner();
+    error EthFlo_NotYourDonation();
 
     struct Fundraiser {
         address creatorAddr;
@@ -104,6 +105,9 @@ contract EthFlo {
         // fundraiser Mapping update - amount raised per fundraiser
         fundraisers[_fundraiserId].amountRaised += _amountDonated;
 
+        // mapping (uint256 id => address donorAddr) public donorDonated;
+        // donorDonated[_fundraiserId] = msg.sender;
+
         // Receive funds
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
@@ -157,7 +161,19 @@ contract EthFlo {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
     }
 
-    function withdrawDonationFromUnsuccessfulFundraiser() public {
+    function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) public {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
+        uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];
+
+        // Checks
+
+        // Checks: 1. if caller is the donor
+        if (amountToBeReturned == 0) {
+            revert EthFlo_NotYourDonation();
+        }
+        // Checks: 2. if fundraiser is complete and unsuccessful
+
+        // Refund donor
+        USDT.safeTransfer(msg.sender, amountToBeReturned);
     }
 }
