@@ -25,6 +25,7 @@ contract EthFlo {
     error EthFlo_GoalNotReached();
     error EthFlo_IncorrectFundraiserOwner();
     error EthFlo_NotYourDonation();
+    error EthFlo_FundraiserWasSuccessful();
 
     struct Fundraiser {
         address creatorAddr;
@@ -44,6 +45,7 @@ contract EthFlo {
     uint256 public constant ADMIN_FEE = 5; // 5%
     IERC20 public immutable USDT;
     uint256 public s_fundraiserCount;
+    // FundraiserState private s_fundraiserState;
 
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
@@ -165,13 +167,29 @@ contract EthFlo {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
         uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];
 
+        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+
+        // Check: goal is reached by deadline
+        uint256 deadline = selectedFundraiser.deadline;
+        uint256 goal = selectedFundraiser.goal;
+        uint256 amountRaised = selectedFundraiser.amountRaised;
+
         // Checks
 
         // Checks: 1. if caller is the donor
         if (amountToBeReturned == 0) {
             revert EthFlo_NotYourDonation();
         }
-        // Checks: 2. if fundraiser is complete and unsuccessful
+
+        // Checks: 2. check if fundraiser deadline has passed
+        if (block.timestamp < deadline) {
+            revert EthFlo_FundraiserStillActive();
+        }
+
+        // Checks: 3. if fundraiser succeeded
+        if (goal >= amountRaised) {
+            revert EthFlo_FundraiserWasSuccessful();
+        }
 
         // Refund donor
         USDT.safeTransfer(msg.sender, amountToBeReturned);
