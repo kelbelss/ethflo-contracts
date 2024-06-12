@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title EthFlo Contract
@@ -13,20 +14,26 @@ contract EthFlo {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
+    using SafeERC20 for IERC20;
+
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
     error EthFlo_FundraiserDoesNotExist();
     error EthFlo_FundraiserDeadlineHasPassed();
-    error EthFlo_MinimumDonationNotExceeded();
+    error EthFlo_MinimumDonationNotMet();
 
     struct Fundraiser {
         address creatorAddr;
         uint256 deadline;
         uint256 goal;
+        uint256 amountRaised;
     }
 
     mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
+    mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
 
+    uint256 public constant MIN_DURATION = 5 days;
+    uint256 public constant MAX_DURATION = 90 days; // $10
     uint256 public constant MIN_GOAL = 10e6; // $10
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
@@ -40,12 +47,12 @@ contract EthFlo {
         USDT = IERC20(_usdtAddress);
     }
 
-    function createFundraiser(address _creatorAddr, uint256 _deadline, uint256 _goal) external returns (uint256) {
+    function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
 
         uint256 duration = _deadline - block.timestamp;
 
-        if (duration < 5 days || duration > 90 days) {
+        if (duration < MIN_DURATION || duration > MAX_DURATION) {
             revert EthFlo_DeadlineError();
         }
 
@@ -56,30 +63,20 @@ contract EthFlo {
         uint256 id = s_fundraiserCount;
         ++id;
 
-        fundraisers[id] = Fundraiser(_creatorAddr, _deadline, _goal);
+        fundraisers[id] = Fundraiser(msg.sender, _deadline, _goal, 0);
 
         s_fundraiserCount = id;
 
-        emit CreateFundraiser(_creatorAddr, _deadline, _goal);
+        emit CreateFundraiser(msg.sender, _deadline, _goal);
 
         return id;
     }
 
-    function donate(uint256 _fundraiserId, uint256 _amountDonated) external payable {
-        /**
-         * TODO:
-         * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
-         *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
-         *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
-         */
-
-        //  donor projects mapping - address to array of id projects donated too
-        // other mapping -> above mapping and then to amount
-
+    function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
         // Checks: 1. if fundraiser exists
-        if (selectedFundraiser.goal < MIN_GOAL) {
+        if (selectedFundraiser.goal == 0) {
             revert EthFlo_FundraiserDoesNotExist();
         }
 
@@ -90,15 +87,20 @@ contract EthFlo {
 
         // Checks: 3. if minimum amount is reached
         if (_amountDonated < MINIMUM_DONATION) {
-            revert EthFlo_MinimumDonationNotExceeded();
+            revert EthFlo_MinimumDonationNotMet();
         }
 
-        // Mapping - donors personal donations lis with ID and amounts
+        // Mapping - donor projects mapping - address to array of id projects donated too with amount
+        //      mapping (address donor => idArray[] and amounts) public donorsDifferentDonationsIds;
 
-        // Mapping - fundraisers list of donors with amount
+        // donorsAmount Mapping update - fundraisers id and amount donated by donor
+        donorsAmount[msg.sender][_fundraiserId] = _amountDonated;
 
-        // Recieve funds
-        USDT.transferFrom(msg.sender, address(this), _amountDonated); // Emits a {Transfer} event.
+        // fundraiser Mapping update - amount raised per fundraiser
+        fundraisers[_fundraiserId].amountRaised += _amountDonated;
+
+        // Receive funds
+        USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
         // Event
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
