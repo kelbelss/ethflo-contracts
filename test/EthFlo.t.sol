@@ -120,4 +120,18 @@ contract EthFloTest is Test {
         emit EthFlo.Donation(DONOR, 1, 15e6);
         ethFlo.donate(1, 15e6);
     }
+
+    // creatorWithdraw TESTS
+
+    function test_creatorWithdraw_success() public {}
+
+    function test_creatorWithdraw_fail_EthFlo_IncorrectFundraiserOwner() public {}
+
+    function test_creatorWithdraw_fail_EthFlo_FundraiserStillActive() public {}
+
+    function test_creatorWithdraw_fail_EthFlo_GoalNotReached() public {}
+
+    function test_creatorWithdraw_checkAdminFee_success() public {}
+
+    function test_event_creatorWithdraw_success() public {}
 }
