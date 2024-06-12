@@ -26,9 +26,11 @@ contract EthFlo {
         address creatorAddr;
         uint256 deadline;
         uint256 goal;
+        uint256 amountRaised;
     }
 
     mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
+    mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
 
     uint256 public constant MIN_GOAL = 10e6; // $10
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
@@ -59,7 +61,7 @@ contract EthFlo {
         uint256 id = s_fundraiserCount;
         ++id;
 
-        fundraisers[id] = Fundraiser(msg.sender, _deadline, _goal);
+        fundraisers[id] = Fundraiser(msg.sender, _deadline, _goal, 0);
 
         s_fundraiserCount = id;
 
@@ -69,16 +71,6 @@ contract EthFlo {
     }
 
     function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
-        /**
-         * TODO:
-         * add donor to mapping of donors per fundraiser - emit event with donor address and index them for list at the end
-         *      mapping(address donor => mapping(address project => uint256 amount)) public donations;
-         *      uint256 donorsDonationToFundraiser = donations[donor][fundraiser];
-         */
-
-        //  donor projects mapping - address to array of id projects donated too
-        // other mapping -> above mapping and then to amount
-
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
         // Checks: 1. if fundraiser exists
@@ -96,9 +88,14 @@ contract EthFlo {
             revert EthFlo_MinimumDonationNotMet();
         }
 
-        // Mapping - donors personal donations lis with ID and amounts
+        // Mapping - donor projects mapping - address to array of id projects donated too with amount
+        //      mapping (address donor => idArray[] and amounts) public donorsDifferentDonationsIds;
 
-        // Mapping - fundraisers list of donors with amount
+        // donorsAmount Mapping update - fundraisers id and amount donated by donor
+        donorsAmount[msg.sender][_fundraiserId] = _amountDonated;
+
+        // fundraiser Mapping update - amount raised per fundraiser
+        fundraisers[_fundraiserId].amountRaised += _amountDonated;
 
         // Receive funds
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
