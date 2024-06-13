@@ -50,6 +50,7 @@ contract EthFlo {
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
     event FundsWithdrawn(address indexed creatorAddr, uint256 indexed fundraiserId, uint256 amountReceived);
+    event DonorFundsReturned(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
 
     constructor(address _usdtAddress) {
         USDT = IERC20(_usdtAddress);
@@ -193,5 +194,8 @@ contract EthFlo {
 
         // Refund donor
         USDT.safeTransfer(msg.sender, amountToBeReturned);
+
+        // Event
+        emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);
     }
 }
