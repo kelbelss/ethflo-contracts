@@ -194,12 +194,54 @@ contract EthFloTest is Test {
         ethFlo.creatorWithdraw(1);
     }
 
-    function test_creatorWithdraw_checkAdminFee_success() public {}
+    function test_creatorWithdraw_checkAdminFee_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.startPrank(CREATOR);
+        vm.warp(20e12);
+        ethFlo.creatorWithdraw(1);
+        // admin fee is 5%
+        uint256 amountReaminingAfterWithdraw = 25e6 * 5 / 100;
+        assertEq(USDT.balanceOf(address(ethFlo)), amountReaminingAfterWithdraw);
+        console.log("Fee check answer:", amountReaminingAfterWithdraw);
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+    }
 
-    function test_event_creatorWithdraw_success() public {}
+    function test_event_FundsWithdrawn_creatorWithdraw_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.expectEmit(true, true, false, true);
+        vm.startPrank(CREATOR);
+        vm.warp(20e12);
+        // test event - calculate amount remaining after fee (5%)
+        uint256 amountAfterFeeTaken = 25e6 * 95 / 100;
+        emit EthFlo.FundsWithdrawn(CREATOR, 1, amountAfterFeeTaken);
+        ethFlo.creatorWithdraw(1);
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+    }
 
     // claimRewardForSuccessfulFundraiser TESTS
 
+    //
+    //
     //
 
     // withdrawDonationFromUnsuccessfulFundraiser TESTS
