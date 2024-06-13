@@ -45,7 +45,6 @@ contract EthFlo {
     uint256 public constant ADMIN_FEE = 5; // 5%
     IERC20 public immutable USDT;
     uint256 public s_fundraiserCount;
-    // FundraiserState private s_fundraiserState;
 
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
