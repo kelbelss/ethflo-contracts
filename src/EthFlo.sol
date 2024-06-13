@@ -187,7 +187,7 @@ contract EthFlo {
         }
 
         // Checks: 3. if fundraiser succeeded
-        if (goal >= amountRaised) {
+        if (amountRaised >= goal) {
             revert EthFlo_FundraiserWasSuccessful();
         }
 

@@ -144,9 +144,9 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 31e6);
-        ethFlo.donate(1, 31e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 31e6);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // withdraw donation
         vm.warp(30e12);
@@ -177,7 +177,39 @@ contract EthFloTest is Test {
         console.log("Caller address:", address(this), "does not match actual donor:", DONOR);
     }
 
-    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_FundraiserStillActive() public {}
+    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_FundraiserStillActive() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 35e6);
+        ethFlo.donate(1, 35e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // withdraw donation
+        // vm.warp(30e12);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserStillActive.selector);
+        ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
 
-    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_FundraiserWasSuccessful() public {}
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+    }
+
+    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_FundraiserWasSuccessful() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 35e6);
+        ethFlo.donate(1, 35e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // withdraw donation
+        vm.warp(30e12);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserWasSuccessful.selector);
+        ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
+    }
 }
