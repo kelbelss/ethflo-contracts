@@ -123,17 +123,84 @@ contract EthFloTest is Test {
 
     // creatorWithdraw TESTS
 
-    function test_creatorWithdraw_success() public {}
+    function test_creatorWithdraw_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.startPrank(CREATOR);
+        vm.warp(20e12);
+        ethFlo.creatorWithdraw(1);
 
-    function test_creatorWithdraw_fail_EthFlo_IncorrectFundraiserOwner() public {}
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+    }
 
-    function test_creatorWithdraw_fail_EthFlo_FundraiserStillActive() public {}
+    function test_creatorWithdraw_fail_EthFlo_IncorrectFundraiserOwner() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.warp(20e12);
+        vm.expectRevert(EthFlo.EthFlo_IncorrectFundraiserOwner.selector);
+        ethFlo.creatorWithdraw(1);
+    }
 
-    function test_creatorWithdraw_fail_EthFlo_GoalNotReached() public {}
+    function test_creatorWithdraw_fail_EthFlo_FundraiserStillActive() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.startPrank(CREATOR);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserStillActive.selector);
+        ethFlo.creatorWithdraw(1);
+    }
+
+    function test_creatorWithdraw_fail_EthFlo_GoalNotReached() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.warp(20e12);
+        vm.startPrank(CREATOR);
+        vm.expectRevert(EthFlo.EthFlo_GoalNotReached.selector);
+        ethFlo.creatorWithdraw(1);
+    }
 
     function test_creatorWithdraw_checkAdminFee_success() public {}
 
     function test_event_creatorWithdraw_success() public {}
+
+    // claimRewardForSuccessfulFundraiser TESTS
+
+    //
 
     // withdrawDonationFromUnsuccessfulFundraiser TESTS
 
