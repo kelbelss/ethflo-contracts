@@ -19,7 +19,7 @@ Fund raising platform that allows users to create a fund raiser or donate to oth
 
 5. If goal not reached - return amount to donors via claim so they pay gas. withdrawDonationFromUnsuccessfulFundraiser()
 
-6. Distribute project tokens (an ERC20 token - OpenZeppelin ERC20) to donors as rewards via claim - claimRewardForSuccessfulFundraiser().
+6. Distribute project utility tokens (an ERC20 token - OpenZeppelin ERC20) to donors as rewards via claim - claimRewardForSuccessfulFundraiser().
 
 7. Decide on rewards... badges, perks, yield cut?
 
