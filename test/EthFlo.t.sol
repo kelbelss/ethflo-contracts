@@ -5,6 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {StdUtils} from "lib/forge-std/src/StdUtils.sol";
 import {EthFlo} from "../src/EthFlo.sol";
 
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -31,6 +32,11 @@ contract EthFloTest is Test {
         vm.startPrank(CREATOR);
         ethFlo.createFundraiser({_deadline: deadline, _goal: goal});
         vm.stopPrank();
+    }
+
+    function _donateFunctionForTests(uint256 _fundraiserId, uint256 _amount) internal {
+        USDT.forceApprove(address(ethFlo), _amount);
+        ethFlo.donate(_fundraiserId, _amount);
     }
 
     // createFundraiser TESTS
@@ -70,6 +76,17 @@ contract EthFloTest is Test {
 
     // donate TESTS
 
+    function test_donate_receiveDonation_success() public {
+        _createFunctionForTests(block.timestamp + 5 days, 30e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 35e6);
+        ethFlo.donate(1, 35e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+    }
+
     function test_donate_fail_EthFlo_FundraiserDoesNotExist() public {
         vm.startPrank(DONOR);
         vm.expectRevert(EthFlo.EthFlo_FundraiserDoesNotExist.selector);
@@ -93,17 +110,6 @@ contract EthFloTest is Test {
         USDT.forceApprove(address(ethFlo), 20e6);
         vm.expectRevert(EthFlo.EthFlo_MinimumDonationNotMet.selector);
         ethFlo.donate(1, 5e6);
-    }
-
-    function test_donate_receiveDonation_success() public {
-        _createFunctionForTests(block.timestamp + 5 days, 30e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 0);
-        console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
-        vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 35e6);
-        ethFlo.donate(1, 35e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
     }
 
     function test_event_Donation_donate_success() public {
@@ -240,9 +246,11 @@ contract EthFloTest is Test {
 
     // claimRewardForSuccessfulFundraiser TESTS
 
-    //
-    //
-    //
+    // function test_claimRewardForSuccessfulFundraiser_success() public {}
+    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {}
+    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserStillActive() public {}
+    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserWasUnsuccessful() public {}
+    // function test_event_TokensClaimed_claimRewardForSuccessfulFundraiser_success() public {}
 
     // withdrawDonationFromUnsuccessfulFundraiser TESTS
 
@@ -253,8 +261,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 25e6);
-        ethFlo.donate(1, 25e6);
+        _donateFunctionForTests(1, 25e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // withdraw donation
@@ -272,8 +279,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 25e6);
-        ethFlo.donate(1, 25e6);
+        _donateFunctionForTests(1, 25e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         vm.stopPrank();
@@ -293,8 +299,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 35e6);
-        ethFlo.donate(1, 35e6);
+        _donateFunctionForTests(1, 35e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // withdraw donation
@@ -312,8 +317,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 35e6);
-        ethFlo.donate(1, 35e6);
+        _donateFunctionForTests(1, 35e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // withdraw donation
@@ -329,8 +333,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance before donation", USDT.balanceOf(address(ethFlo)));
         // make donation
         vm.startPrank(DONOR);
-        USDT.forceApprove(address(ethFlo), 25e6);
-        ethFlo.donate(1, 25e6);
+        _donateFunctionForTests(1, 25e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // withdraw donation and test event
