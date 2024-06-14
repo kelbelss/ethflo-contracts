@@ -124,12 +124,6 @@ contract EthFlo is ERC20 {
     function yieldStuff() internal {}
 
     function creatorWithdraw(uint256 _fundraiserId) public {
-        // only creator
-        /**
-         * TODO: check user has reached goal at deadline
-         *     deduct fee - 10% for unverified, 2% for verified - 5% for V1
-         *     calculate split of yield amount - V1 admin gets 100%
-         */
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
         // Check: goal is reached by deadline
@@ -193,6 +187,7 @@ contract EthFlo is ERC20 {
 
         _mint(msg.sender, amountOfTokens);
 
+        // Event
         emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
     }
 
