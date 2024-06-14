@@ -246,11 +246,86 @@ contract EthFloTest is Test {
 
     // claimRewardForSuccessfulFundraiser TESTS
 
-    // function test_claimRewardForSuccessfulFundraiser_success() public {}
-    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {}
-    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserStillActive() public {}
-    // function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserWasUnsuccessful() public {}
-    // function test_event_TokensClaimed_claimRewardForSuccessfulFundraiser_success() public {}
+    function test_claimRewardForSuccessfulFundraiser_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        _donateFunctionForTests(1, 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // claim reward
+        vm.warp(20e12);
+        ethFlo.claimRewardForSuccessfulFundraiser(1);
+        assertEq(ethFlo.balanceOf(DONOR), 25e18);
+        console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
+    }
+
+    function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        _donateFunctionForTests(1, 25e6);
+        vm.stopPrank();
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // claim reward
+        vm.warp(20e12);
+        vm.expectRevert(EthFlo.EthFlo_NotYourDonation.selector);
+        ethFlo.claimRewardForSuccessfulFundraiser(1);
+        assertEq(ethFlo.balanceOf(DONOR), 0);
+        console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
+    }
+
+    function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserStillActive() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        _donateFunctionForTests(1, 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // claim reward
+        // vm.warp(20e12);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserStillActive.selector);
+        ethFlo.claimRewardForSuccessfulFundraiser(1);
+        assertEq(ethFlo.balanceOf(DONOR), 0);
+        console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
+    }
+
+    function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_FundraiserWasUnsuccessful() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        _donateFunctionForTests(1, 15e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // claim reward
+        vm.warp(20e12);
+        vm.expectRevert(EthFlo.EthFlo_FundraiserWasUnsuccessful.selector);
+        ethFlo.claimRewardForSuccessfulFundraiser(1);
+        assertEq(ethFlo.balanceOf(DONOR), 0);
+        console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
+    }
+
+    function test_event_TokensClaimed_claimRewardForSuccessfulFundraiser_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        _donateFunctionForTests(1, 25e6);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        // claim reward and test event
+        vm.expectEmit(true, true, false, true);
+        vm.warp(20e12);
+        emit EthFlo.TokensClaimed(DONOR, 1, 25e18);
+        ethFlo.claimRewardForSuccessfulFundraiser(1);
+
+        console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
+    }
 
     // withdrawDonationFromUnsuccessfulFundraiser TESTS
 
