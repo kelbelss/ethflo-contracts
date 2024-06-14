@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -10,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  * @notice This contract is for creating a crowdfunding program
  * @dev
  */
-contract EthFlo {
+contract EthFlo is ERC20 {
     // GO SLOW AND TEST AS YOU GO
     // CEI: Checks, Effects, Interactions
 
@@ -25,6 +26,7 @@ contract EthFlo {
     error EthFlo_GoalNotReached();
     error EthFlo_IncorrectFundraiserOwner();
     error EthFlo_NotYourDonation();
+    error EthFlo_FundraiserWasUnsuccessful();
     error EthFlo_FundraiserWasSuccessful();
 
     struct Fundraiser {
@@ -43,6 +45,7 @@ contract EthFlo {
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
     uint256 public constant ADMIN_FEE = 5; // 5%
+    uint256 USDT_TO_ETHFLO_DECIMALS = 1e12;
     IERC20 public immutable USDT;
     uint256 public s_fundraiserCount;
 
@@ -50,8 +53,9 @@ contract EthFlo {
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
     event FundsWithdrawn(address indexed creatorAddr, uint256 indexed fundraiserId, uint256 amountReceived);
     event DonorFundsReturned(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
+    event TokensClaimed(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amountClaimed);
 
-    constructor(address _usdtAddress) {
+    constructor(address _usdtAddress) ERC20("EthFlo", "ETHFLO") {
         USDT = IERC20(_usdtAddress);
     }
 
@@ -159,8 +163,37 @@ contract EthFlo {
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
     }
 
-    function claimRewardForSuccessfulFundraiser() public {
+    function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) public {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
+        uint256 amountDonated = donorsAmount[msg.sender][_fundraiserId];
+
+        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+        uint256 deadline = selectedFundraiser.deadline;
+        uint256 goal = selectedFundraiser.goal;
+        uint256 amountRaised = selectedFundraiser.amountRaised;
+
+        // Checks
+
+        // Check 1. if caller is the donor
+        if (amountDonated == 0) {
+            revert EthFlo_NotYourDonation();
+        }
+
+        // Checks: 2. check if fundraiser deadline has passed
+        if (block.timestamp < deadline) {
+            revert EthFlo_FundraiserStillActive();
+        }
+
+        // Checks: 3. if fundraiser succeeded
+        if (amountRaised < goal) {
+            revert EthFlo_FundraiserWasUnsuccessful();
+        }
+
+        uint256 amountOfTokens = amountDonated * USDT_TO_ETHFLO_DECIMALS;
+
+        _mint(msg.sender, amountOfTokens);
+
+        emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
     }
 
     function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) public {
@@ -168,8 +201,6 @@ contract EthFlo {
         uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];
 
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
-
-        // Check: goal is reached by deadline
         uint256 deadline = selectedFundraiser.deadline;
         uint256 goal = selectedFundraiser.goal;
         uint256 amountRaised = selectedFundraiser.amountRaised;
