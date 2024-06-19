@@ -12,9 +12,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  * @dev
  */
 contract EthFlo is ERC20 {
-    // GO SLOW AND TEST AS YOU GO
-    // CEI: Checks, Effects, Interactions
-
     using SafeERC20 for IERC20;
 
     error EthFlo_DeadlineError();
@@ -61,6 +58,8 @@ contract EthFlo is ERC20 {
 
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
+
+        // TODO add creation fee to avoid spam
 
         uint256 duration = _deadline - block.timestamp;
 

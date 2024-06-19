@@ -55,6 +55,8 @@ contract EthFloTest is Test {
         assertEq(_amountRaised, 0, "Amount raised not correct");
     }
 
+    // function test_createFundraiser_fail_feeNotPaid() public {}
+
     function test_createFundraiser_fail_DeadlineError() public {
         vm.startPrank(CREATOR);
         vm.expectRevert(EthFlo.EthFlo_DeadlineError.selector);
