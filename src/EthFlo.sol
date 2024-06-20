@@ -59,8 +59,6 @@ contract EthFlo is ERC20 {
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
 
-        // TODO add creation fee to avoid spam
-
         uint256 duration = _deadline - block.timestamp;
 
         if (duration < MIN_DURATION || duration > MAX_DURATION) {
