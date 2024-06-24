@@ -4,6 +4,7 @@ pragma solidity 0.8.22;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@aave/contracts/interfaces/IPool.sol";
 
 /**
  * @title EthFlo Contract
@@ -45,6 +46,10 @@ contract EthFlo is ERC20 {
     uint256 USDT_TO_ETHFLO_DECIMALS = 1e12;
     IERC20 public immutable USDT;
     uint256 public s_fundraiserCount;
+
+    // AAVE INTERACTION
+    address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    address constant USDT_ADDRESS = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
@@ -114,11 +119,12 @@ contract EthFlo is ERC20 {
         // Receive funds
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
+        // Send funds to AAVE to earn yield
+        IPool(AAVE_POOL).supply(USDT, _amountDonated, address(this), 0);
+
         // Event
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
     }
-
-    function yieldStuff() internal {}
 
     function creatorWithdraw(uint256 _fundraiserId) public {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
@@ -147,8 +153,11 @@ contract EthFlo is ERC20 {
         // Deduct 5% fee
         uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
 
+        // Withdraw funds from AAVE and send to creator
+        IPool(AAVE_POOL).withdraw(USDT, amountAfterFee, msg.sender);
+
         // Send funds
-        USDT.safeTransfer(msg.sender, amountAfterFee);
+        // USDT.safeTransfer(msg.sender, amountAfterFee);
 
         // Event
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
