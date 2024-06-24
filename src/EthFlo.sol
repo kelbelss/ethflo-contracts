@@ -156,11 +156,11 @@ contract EthFlo is ERC20 {
         // Deduct 5% fee
         uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
 
-        // Withdraw funds from AAVE and send to creator
-        IPool(AAVE_POOL).withdraw(address(USDT), amountAfterFee, msg.sender);
+        // Withdraw funds from AAVE and send to EthFlo
+        IPool(AAVE_POOL).withdraw(address(USDT), amountAfterFee, address(this));
 
-        // Send funds
-        // USDT.safeTransfer(msg.sender, amountAfterFee);
+        // Send funds to creator
+        USDT.safeTransfer(msg.sender, amountAfterFee);
 
         // Event
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
