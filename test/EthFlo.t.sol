@@ -8,22 +8,35 @@ import {EthFlo} from "../src/EthFlo.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IPool} from "@aave/contracts/interfaces/IPool.sol";
 
 contract EthFloTest is Test {
     using SafeERC20 for IERC20;
 
     EthFlo ethFlo;
 
+    IERC20 constant USDT = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+
+    address public aUSDT_ADDRESS;
+
     address public CREATOR = makeAddr("creator");
     address public DONOR = makeAddr("donor");
-
-    IERC20 public USDT = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
     function setUp() public {
         uint256 forkId = vm.createFork(vm.envString("MAINNET_RPC_URL"), 20000000);
         vm.selectFork(forkId);
 
-        ethFlo = new EthFlo(address(USDT));
+        // Verify that the Aave Pool contract exists at the expected address
+        require(address(AAVE_POOL).code.length > 0, "Aave Pool contract not found");
+
+        // Verify that the USDT contract exists at the expected address
+        require(address(USDT).code.length > 0, "USDT contract not found");
+
+        aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress;
+        console.log("aUSDT address retrieved:", aUSDT_ADDRESS);
+
+        ethFlo = new EthFlo(address(USDT), address(AAVE_POOL));
 
         deal(address(USDT), DONOR, 100e6);
     }
@@ -83,8 +96,18 @@ contract EthFloTest is Test {
         vm.startPrank(DONOR);
         USDT.forceApprove(address(ethFlo), 35e6);
         ethFlo.donate(1, 35e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        // Check aUSDT balance of ethFlo contract
+        // address aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(USDT_ADDRESS).aTokenAddress;
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
+        assertEq(aUSDTBalance, 35e6);
+        console.log("EthFlo USDT balance after donation", USDT.balanceOf(address(ethFlo)));
+        console.log("EthFlo aUSDT balance after donation", aUSDTBalance);
+
+        (,,, uint256 amountRaised) = ethFlo.fundraisers(1);
+        console.log("Fundraiser 1 amount raised", amountRaised);
+        console.log("Donor's donation amount", ethFlo.donorsAmount(DONOR, 1));
     }
 
     function test_donate_fail_EthFlo_FundraiserDoesNotExist() public {
@@ -137,7 +160,10 @@ contract EthFloTest is Test {
         vm.startPrank(DONOR);
         USDT.forceApprove(address(ethFlo), 25e6);
         ethFlo.donate(1, 25e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
+        assertEq(aUSDTBalance, 25e6);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         vm.stopPrank();
         // creator withdraw
