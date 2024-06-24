@@ -45,11 +45,12 @@ contract EthFlo is ERC20 {
     uint256 public constant ADMIN_FEE = 5; // 5%
     uint256 USDT_TO_ETHFLO_DECIMALS = 1e12;
     IERC20 public immutable USDT;
+    IPool public immutable AAVE_POOL;
     uint256 public s_fundraiserCount;
 
     // AAVE INTERACTION
-    address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
-    address constant USDT_ADDRESS = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    // address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    // address constant USDT_ADDRESS = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
@@ -57,8 +58,9 @@ contract EthFlo is ERC20 {
     event DonorFundsReturned(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
     event TokensClaimed(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amountClaimed);
 
-    constructor(address _usdtAddress) ERC20("EthFlo", "ETHFLO") {
+    constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") {
         USDT = IERC20(_usdtAddress);
+        AAVE_POOL = IPool(_aavePool);
     }
 
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
@@ -120,7 +122,8 @@ contract EthFlo is ERC20 {
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
         // Send funds to AAVE to earn yield
-        IPool(AAVE_POOL).supply(USDT, _amountDonated, address(this), 0);
+        IERC20(USDT).forceApprove(address(AAVE_POOL), _amountDonated);
+        IPool(AAVE_POOL).supply(address(USDT), _amountDonated, address(this), 0);
 
         // Event
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
@@ -154,7 +157,7 @@ contract EthFlo is ERC20 {
         uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
 
         // Withdraw funds from AAVE and send to creator
-        IPool(AAVE_POOL).withdraw(USDT, amountAfterFee, msg.sender);
+        IPool(AAVE_POOL).withdraw(address(USDT), amountAfterFee, msg.sender);
 
         // Send funds
         // USDT.safeTransfer(msg.sender, amountAfterFee);
@@ -224,7 +227,10 @@ contract EthFlo is ERC20 {
         }
 
         // Refund donor
-        USDT.safeTransfer(msg.sender, amountToBeReturned);
+        // USDT.safeTransfer(msg.sender, amountToBeReturned);
+
+        // Withdraw funds from AAVE and send to donor
+        IPool(AAVE_POOL).withdraw(address(USDT), amountToBeReturned, msg.sender);
 
         // Event
         emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);
