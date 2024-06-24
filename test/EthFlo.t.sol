@@ -172,6 +172,8 @@ contract EthFloTest is Test {
         vm.warp(block.timestamp + 100 days);
         ethFlo.creatorWithdraw(1);
 
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
         console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
         console.log("aUSDT balance after withdraw", aUSDTBalance);
     }
@@ -254,7 +256,9 @@ contract EthFloTest is Test {
         // creator withdraw
         vm.startPrank(CREATOR);
         vm.warp(block.timestamp + 100 days);
+
         ethFlo.creatorWithdraw(1);
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
         // admin fee is 5%
         uint256 amountRemainingAfterWithdraw = 25e6 * 5 / 100;
         assertEq(USDT.balanceOf(address(ethFlo)), 0);
