@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "coverage": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage",
+    "deploy": "source .env && forge script script/DeployEthFlo.s.sol:DeployEthFloScript --rpc-url $SEPOLIA_RPC_URL --broadcast --verify"
+  }
+}

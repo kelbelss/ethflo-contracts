@@ -43,7 +43,7 @@ contract EthFlo is ERC20 {
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
     uint256 public constant ADMIN_FEE = 5; // 5%
-    uint256 USDT_TO_ETHFLO_DECIMALS = 1e12;
+    uint256 public constant USDT_TO_ETHFLO_DECIMALS = 1e12;
     IERC20 public immutable USDT;
     IPool public immutable AAVE_POOL;
     uint256 public s_fundraiserCount;
@@ -129,7 +129,7 @@ contract EthFlo is ERC20 {
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
     }
 
-    function creatorWithdraw(uint256 _fundraiserId) public {
+    function creatorWithdraw(uint256 _fundraiserId) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
         // Check: goal is reached by deadline
@@ -166,7 +166,7 @@ contract EthFlo is ERC20 {
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
     }
 
-    function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) public {
+    function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) external {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
         uint256 amountDonated = donorsAmount[msg.sender][_fundraiserId];
 
@@ -200,7 +200,7 @@ contract EthFlo is ERC20 {
         emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
     }
 
-    function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) public {
+    function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) external {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
         uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];
 
