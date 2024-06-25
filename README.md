@@ -23,6 +23,7 @@ This contract is currently deployed on the Sepolia Testnet.
 | src/EthFlo.sol            | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
 | Total                     | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
 
+
 ## V2 Plans
 
 1. Allow fundraiser creators to extend their fundraiser if goal is not met by the deadline. An option will be given to donors at this point if they want to claim their donation back or allow the fundraiser to continue.
