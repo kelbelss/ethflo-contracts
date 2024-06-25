@@ -4,23 +4,27 @@
 
 ## About
 
-Fund raising platform that allows users to create a fund raiser or donate to other users and gain ERC20 tokens as rewards in proportion to their contribution. 
+EthFlo is a fundraising platform that allows users to create a fundraiser or donate to other users and gain ERC20 tokens as rewards in proportion to their contribution.
 
 
-## What do I want it to do?
+- **Create Fundraiser**: Users can create a fundraiser with a duration of 5 - 90 days and a goal of 10 - 100 million USDT. 
+- **Donate**: Donors can donate any amount over 10 USDT. The donation will immediately be supplied to the UDST AAVE pool and start earning yield.
+- **Creator Withdraw**: If a fundraiser reaches its goal within the provided deadline, the creator will be allowed to withdraw the donated USDT. A 5% fee will be taken to prevent Sybil attacks. The amount owed will be withdrawn from AAVE and sent to the creator.
+- **Donor Token Claim**: Once a fundraiser has met its goal in the specified deadline, each donor will be able to claim EthFlo tokens in proportion to their donation. 
+- **Donor Donation Claim**: If a fundraiser is not successful, each donor will be able to withdraw their donated amount by claiming it back. This USDT will come directly from AAVE.
 
-1. Create createFundraiser() Function with a goal, and a deadline. Add ID to each fundraiser. Add checks for deadline and goals.
+This contract is currently deployed on the Sepolia Testnet.
 
-2. donate() - set minimum donate amount, add mapping of donor and their amount for that fundraiser, add funds to yield amount. Use USDT.
-   
-3. Donor money - add funds to general Aave pot to earn yield until deadline. 
-   
-4. If goal is reached - allow wallet that created that specific fund raiser to withdraw those funds and pay 5% fee to prevent sybil attack. Give creators the donors addresses for possible future rewards. Split of yield logic. creatorWithdraw()
 
-5. If goal not reached - return amount to donors via claim so they pay gas. withdrawDonationFromUnsuccessfulFundraiser()
+## Coverage
 
-6. Distribute project utility tokens (an ERC20 token - OpenZeppelin ERC20) to donors as rewards via claim - claimRewardForSuccessfulFundraiser().
+| File                      | % Lines         | % Statements    | % Branches      | % Funcs       |
+|---------------------------|-----------------|-----------------|-----------------|---------------|
+| src/EthFlo.sol            | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
+| Total                     | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
 
-7. Decide on rewards... badges, perks, yield cut?
+## V2 Plans
 
-8. V2 - allow fundraisers to mint their own token and donors can decide between crowdfund token or fundraiser token. Another V2 option - allow fundraisers to extend period if goal not reached and donors can decide to remove donation or not. V2 - setCreatorVerification() - Verify fundraisers to prevent sybil attacks farming ERC20 token reward - 10% fee for unverified, 2% fee for verified.
+1. Allow fundraiser creators to extend their fundraiser if goal is not met by the deadline. An option will be given to donors at this point if they want to claim their donation back or allow the fundraiser to continue.
+2. Allow fundraiser creators to verify themselves - this will allow the Sybil attack fee to be removed.
+3. Decide on the value for token holders (perks, yield cut, badges, etc).
