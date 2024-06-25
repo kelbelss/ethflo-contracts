@@ -384,14 +384,18 @@ contract EthFloTest is Test {
         // make donation
         vm.startPrank(DONOR);
         _donateFunctionForTests(1, 25e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
         // withdraw donation
         vm.warp(block.timestamp + 100 days);
         ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
         vm.stopPrank();
 
-        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        console.log("EthFlo aUSD balance after withdraw", aUSDTBalance);
     }
 
     function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {
@@ -402,8 +406,11 @@ contract EthFloTest is Test {
         // make donation
         vm.startPrank(DONOR);
         _donateFunctionForTests(1, 25e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
         vm.stopPrank();
         // withdraw donation
         vm.warp(block.timestamp + 100 days);
@@ -422,8 +429,11 @@ contract EthFloTest is Test {
         // make donation
         vm.startPrank(DONOR);
         _donateFunctionForTests(1, 35e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 35e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
         // withdraw donation
         // vm.warp(30e12);
         vm.expectRevert(EthFlo.EthFlo_FundraiserStillActive.selector);
@@ -440,8 +450,11 @@ contract EthFloTest is Test {
         // make donation
         vm.startPrank(DONOR);
         _donateFunctionForTests(1, 35e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 35e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 35e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
         // withdraw donation
         vm.warp(block.timestamp + 100 days);
         vm.expectRevert(EthFlo.EthFlo_FundraiserWasSuccessful.selector);
@@ -456,8 +469,11 @@ contract EthFloTest is Test {
         // make donation
         vm.startPrank(DONOR);
         _donateFunctionForTests(1, 25e6);
-        assertEq(USDT.balanceOf(address(ethFlo)), 25e6);
-        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
         // withdraw donation and test event
         vm.expectEmit(true, true, false, true);
         vm.warp(block.timestamp + 100 days);
@@ -465,5 +481,8 @@ contract EthFloTest is Test {
         ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
         vm.stopPrank();
         console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        console.log("EthFlo aUSD balance after withdraw", aUSDTBalance);
     }
 }
