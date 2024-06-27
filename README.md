@@ -16,7 +16,7 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 This contract is currently deployed on the Sepolia Testnet.
 
 
-## Coverage
+## Test Coverage
 
 | File                      | % Lines         | % Statements    | % Branches      | % Funcs       |
 |---------------------------|-----------------|-----------------|-----------------|---------------|
