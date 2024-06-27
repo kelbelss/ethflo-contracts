@@ -8,10 +8,10 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 
 
 - **Create Fundraiser**: Users can create a fundraiser with a duration of 5 - 90 days and a goal of 10 - 100 million USDT. 
-- **Donate**: Donors can donate any amount over 10 USDT. The donation will immediately be supplied to the UDST AAVE pool and start earning yield.
-- **Creator Withdraw**: If a fundraiser reaches its goal within the provided deadline, the creator will be allowed to withdraw the donated USDT. A 5% fee will be taken to prevent Sybil attacks. The amount owed will be withdrawn from AAVE and sent to the creator.
+- **Donate**: Donors can donate any amount over 10 USDT. The donation will immediately be supplied to the UDST Aave pool and start earning yield.
+- **Creator Withdraw**: If a fundraiser reaches its goal within the provided deadline, the creator will be allowed to withdraw the donated USDT. A 5% fee will be taken to prevent Sybil attacks. The amount owed will be withdrawn from Aave and sent to the creator.
 - **Donor Token Claim**: Once a fundraiser has met its goal in the specified deadline, each donor will be able to claim EthFlo tokens in proportion to their donation. 
-- **Donor Donation Claim**: If a fundraiser is not successful, each donor will be able to withdraw their donated amount by claiming it back. This USDT will come directly from AAVE.
+- **Donor Donation Claim**: If a fundraiser is not successful, each donor will be able to withdraw their donated amount by claiming it back. This USDT will come directly from Aave.
 
 This contract is currently deployed on the Sepolia Testnet.
 
