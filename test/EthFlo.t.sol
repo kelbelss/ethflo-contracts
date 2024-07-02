@@ -64,13 +64,21 @@ contract EthFloTest is Test {
     // withdrawFeesAndYield TESTS
 
     function test_withdrawFeesAndYield_success() public {
+        // Check initial value of s_totalEscrowedFunds
+        assertEq(ethFlo.getTotalEscrowedFunds(), 0);
+
         // create fundraiser
         _createFunctionForTests(block.timestamp + 5 days, 20e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 0);
+
         // make donation
         vm.startPrank(DONOR);
         USDT.forceApprove(address(ethFlo), 25e6);
         ethFlo.donate(1, 25e6);
+
+        // Check s_totalEscrowedFunds after donation
+        assertEq(ethFlo.getTotalEscrowedFunds(), 25e6);
+        console.log("s_totalEscrowedFunds after donation", ethFlo.getTotalEscrowedFunds());
 
         uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
 
@@ -78,6 +86,7 @@ contract EthFloTest is Test {
         console.log("aUSDT balance after donation", aUSDTBalance);
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         vm.stopPrank();
+
         // creator withdraw
         vm.startPrank(CREATOR);
         vm.warp(block.timestamp + 100 days);
@@ -89,12 +98,56 @@ contract EthFloTest is Test {
         console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
         console.log("aUSDT balance after withdraw", aUSDTBalance);
 
+        // Check s_totalEscrowedFunds after creator withdrawal
+        assertEq(ethFlo.getTotalEscrowedFunds(), 0);
+        console.log("s_totalEscrowedFunds after creator withdraw", ethFlo.getTotalEscrowedFunds());
+
+        console.log("aUSDT balance before withdrawFeesAndYield", aUSDTBalance);
+
         vm.startPrank(OWNER);
         aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
         ethFlo.withdrawFeesAndYield(OWNER);
+
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        console.log("aUSDT balance after withdrawFeesAndYield", aUSDTBalance);
+        console.log("Owner balance after fees and yield withdraw", USDT.balanceOf(OWNER));
     }
 
-    function test_withdrawFeesAndYield_fail_NoFeesAndYieldAvailable() public {}
+    function test_withdrawFeesAndYield_fail_NoFeesAndYieldAvailable() public {
+        // Check initial value of s_totalEscrowedFunds
+        assertEq(ethFlo.getTotalEscrowedFunds(), 0);
+
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+
+        // Check s_totalEscrowedFunds after donation
+        assertEq(ethFlo.getTotalEscrowedFunds(), 25e6);
+        console.log("s_totalEscrowedFunds after donation", ethFlo.getTotalEscrowedFunds());
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+
+        console.log("aUSDT balance before withdrawFeesAndYield", aUSDTBalance);
+
+        vm.startPrank(OWNER);
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        vm.expectRevert(EthFlo.EthFlo_NoFeesAndYieldAvailable.selector);
+        ethFlo.withdrawFeesAndYield(OWNER);
+
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        console.log("aUSDT balance after withdrawFeesAndYield", aUSDTBalance);
+        console.log("Owner balance after fees and yield withdraw", USDT.balanceOf(OWNER));
+    }
 
     // createFundraiser TESTS
 

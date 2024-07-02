@@ -46,6 +46,7 @@ contract EthFlo is ERC20, Ownable {
     uint256 public constant MINIMUM_DONATION = 10000000; // $10
     uint256 public constant ADMIN_FEE = 5; // 5%
     uint256 public constant USDT_TO_ETHFLO_DECIMALS = 1e12;
+    address public aUSDT_ADDRESS;
     IERC20 public immutable USDT;
     IPool public immutable AAVE_POOL;
     uint256 public s_fundraiserCount;
@@ -64,10 +65,11 @@ contract EthFlo is ERC20, Ownable {
     constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
         USDT = IERC20(_usdtAddress);
         AAVE_POOL = IPool(_aavePool);
+        aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress;
     }
 
     function withdrawFeesAndYield(address _to) external onlyOwner {
-        uint256 aUSDTBalance = IERC20(USDT).balanceOf(address(this));
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(this));
 
         uint256 feesAndYield = aUSDTBalance - s_totalEscrowedFunds;
 
@@ -180,7 +182,7 @@ contract EthFlo is ERC20, Ownable {
         // Send funds to creator
         // USDT.safeTransfer(msg.sender, amountAfterFee);
 
-        // Update accounting
+        // Update accounting - deduct full amount donated from escrow to account for fees
         s_totalEscrowedFunds -= amountRaised;
 
         // Event
@@ -258,5 +260,9 @@ contract EthFlo is ERC20, Ownable {
 
         // Event
         emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);
+    }
+
+    function getTotalEscrowedFunds() external view returns (uint256) {
+        return s_totalEscrowedFunds;
     }
 }
