@@ -77,7 +77,7 @@ contract EthFlo is ERC20, Ownable {
             revert EthFlo_NoFeesAndYieldAvailable();
         }
 
-        IPool(AAVE_POOL).withdraw(address(USDT), feesAndYield, _to);
+        AAVE_POOL.withdraw(address(USDT), feesAndYield, _to);
     }
 
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
@@ -143,7 +143,7 @@ contract EthFlo is ERC20, Ownable {
 
         // Send funds to AAVE to earn yield
         IERC20(USDT).forceApprove(address(AAVE_POOL), _amountDonated);
-        IPool(AAVE_POOL).supply(address(USDT), _amountDonated, address(this), 0);
+        AAVE_POOL.supply(address(USDT), _amountDonated, address(this), 0);
 
         // Event
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
@@ -177,7 +177,7 @@ contract EthFlo is ERC20, Ownable {
         uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
 
         // Withdraw funds from AAVE and send to EthFlo
-        IPool(AAVE_POOL).withdraw(address(USDT), amountAfterFee, msg.sender);
+        AAVE_POOL.withdraw(address(USDT), amountAfterFee, msg.sender);
 
         // Send funds to creator
         // USDT.safeTransfer(msg.sender, amountAfterFee);
@@ -253,7 +253,7 @@ contract EthFlo is ERC20, Ownable {
         // USDT.safeTransfer(msg.sender, amountToBeReturned);
 
         // Withdraw funds from AAVE and send to donor
-        IPool(AAVE_POOL).withdraw(address(USDT), amountToBeReturned, msg.sender);
+        AAVE_POOL.withdraw(address(USDT), amountToBeReturned, msg.sender);
 
         // Update accounting
         s_totalEscrowedFunds -= amountToBeReturned;
