@@ -20,8 +20,8 @@ This contract is currently deployed on the Sepolia Testnet.
 
 | File                      | % Lines         | % Statements    | % Branches      | % Funcs       |
 |---------------------------|-----------------|-----------------|-----------------|---------------|
-| src/EthFlo.sol            | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
-| Total                     | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (65/65) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (73/73) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (28/28) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (5/5) |
+| src/EthFlo.sol            | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (74/74) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (84/84) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (30/30) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (7/7) |
+| Total                     | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (74/74) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (84/84) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (30/30) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (7/7) |
 
 
 ## V2 Plans
