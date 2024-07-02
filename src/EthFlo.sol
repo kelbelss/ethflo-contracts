@@ -5,6 +5,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IPool} from "@aave/contracts/interfaces/IPool.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title EthFlo Contract
@@ -12,9 +13,10 @@ import {IPool} from "@aave/contracts/interfaces/IPool.sol";
  * @notice This contract is for creating a crowdfunding program
  * @dev
  */
-contract EthFlo is ERC20 {
+contract EthFlo is ERC20, Ownable {
     using SafeERC20 for IERC20;
 
+    error EthFlo_NoFeesAndYieldAvailable();
     error EthFlo_DeadlineError();
     error EthFlo_GoalError();
     error EthFlo_FundraiserDoesNotExist();
@@ -47,6 +49,7 @@ contract EthFlo is ERC20 {
     IERC20 public immutable USDT;
     IPool public immutable AAVE_POOL;
     uint256 public s_fundraiserCount;
+    uint256 public s_totalEscrowedFunds;
 
     // AAVE INTERACTION
     // address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
@@ -58,9 +61,21 @@ contract EthFlo is ERC20 {
     event DonorFundsReturned(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
     event TokensClaimed(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amountClaimed);
 
-    constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") {
+    constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
         USDT = IERC20(_usdtAddress);
         AAVE_POOL = IPool(_aavePool);
+    }
+
+    function withdrawFeesAndYield(address _to) external onlyOwner {
+        uint256 aUSDTBalance = IERC20(USDT).balanceOf(address(this));
+
+        uint256 feesAndYield = aUSDTBalance - s_totalEscrowedFunds;
+
+        if (feesAndYield == 0) {
+            revert EthFlo_NoFeesAndYieldAvailable();
+        }
+
+        IPool(AAVE_POOL).withdraw(address(USDT), feesAndYield, _to);
     }
 
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
@@ -121,6 +136,9 @@ contract EthFlo is ERC20 {
         // Receive funds
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
 
+        // Update accounting
+        s_totalEscrowedFunds += _amountDonated;
+
         // Send funds to AAVE to earn yield
         IERC20(USDT).forceApprove(address(AAVE_POOL), _amountDonated);
         IPool(AAVE_POOL).supply(address(USDT), _amountDonated, address(this), 0);
@@ -161,6 +179,9 @@ contract EthFlo is ERC20 {
 
         // Send funds to creator
         // USDT.safeTransfer(msg.sender, amountAfterFee);
+
+        // Update accounting
+        s_totalEscrowedFunds -= amountRaised;
 
         // Event
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
@@ -231,6 +252,9 @@ contract EthFlo is ERC20 {
 
         // Withdraw funds from AAVE and send to donor
         IPool(AAVE_POOL).withdraw(address(USDT), amountToBeReturned, msg.sender);
+
+        // Update accounting
+        s_totalEscrowedFunds -= amountToBeReturned;
 
         // Event
         emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);

@@ -9,6 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IPool} from "@aave/contracts/interfaces/IPool.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract EthFloTest is Test {
     using SafeERC20 for IERC20;
@@ -20,6 +21,7 @@ contract EthFloTest is Test {
 
     address public aUSDT_ADDRESS;
 
+    address OWNER = makeAddr("Owner");
     address public CREATOR = makeAddr("creator");
     address public DONOR = makeAddr("donor");
 
@@ -36,7 +38,14 @@ contract EthFloTest is Test {
         aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress;
         console.log("aUSDT address retrieved:", aUSDT_ADDRESS);
 
+        vm.startPrank(OWNER);
         ethFlo = new EthFlo(address(USDT), address(AAVE_POOL));
+
+        // console.log("Test address:", address(this));
+        // console.log("EthFlo address:", address(ethFlo));
+        // console.log("Owner address:", OWNER);
+        // console.log("Creators address:", CREATOR);
+        // console.log("Donors address:", DONOR);
 
         deal(address(USDT), DONOR, 100e6);
     }
@@ -51,6 +60,41 @@ contract EthFloTest is Test {
         USDT.forceApprove(address(ethFlo), _amount);
         ethFlo.donate(_fundraiserId, _amount);
     }
+
+    // withdrawFeesAndYield TESTS
+
+    function test_withdrawFeesAndYield_success() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+        console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
+        vm.stopPrank();
+        // creator withdraw
+        vm.startPrank(CREATOR);
+        vm.warp(block.timestamp + 100 days);
+        ethFlo.creatorWithdraw(1);
+        vm.stopPrank();
+
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+
+        console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
+        console.log("aUSDT balance after withdraw", aUSDTBalance);
+
+        vm.startPrank(OWNER);
+        aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        ethFlo.withdrawFeesAndYield(OWNER);
+    }
+
+    function test_withdrawFeesAndYield_fail_NoFeesAndYieldAvailable() public {}
 
     // createFundraiser TESTS
 
