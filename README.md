@@ -1,4 +1,4 @@
-# EthFlo 
+![EthFlo Logo](./images/logo.png)
 
 **EthFlo, derived from the Latin word 'Efflo' meaning 'to blossom', is a crowdfunding platform which embodies the spirit of potential and growth, utilising smart contracts built with Solidity and Foundry.**
 
@@ -14,7 +14,7 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 - **Donor Token Claim**: Once a fundraiser has met its goal in the specified deadline, each donor will be able to claim EthFlo tokens in proportion to their donation. 
 - **Donor Donation Claim**: If a fundraiser is not successful, each donor will be able to withdraw their donated amount by claiming it back. This USDT will come directly from Aave.
 
-## Contract Address
+## Contract Address 🔗
 
 The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link - [EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x90F897AF3c3780A68eB198ddAc574C994911604b)
 
@@ -22,11 +22,11 @@ The EthFlo contract is deployed on the Sepolia network. You can view the contrac
 
 | File                      | % Lines         | % Statements    | % Branches      | % Funcs       |
 |---------------------------|-----------------|-----------------|-----------------|---------------|
-| src/EthFlo.sol            | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (74/74) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (84/84) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (30/30) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (7/7) |
-| Total                     | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (74/74) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (84/84) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (30/30) | ![green](https://via.placeholder.com/15/008000/000000?text=+) 100.00% (7/7) |
+| src/EthFlo.sol            | 🟩 100.00% (74/74) | 🟩 100.00% (84/84) | 🟩 100.00% (30/30) | 🟩 100.00% (7/7) |
+| Total                     | 🟩 100.00% (74/74) | 🟩 100.00% (84/84) | 🟩 100.00% (30/30) | 🟩 100.00% (7/7) |
 
 
-## V2 Plans
+## V2 Plans 🛠️
 
 1. Allow fundraiser creators to extend their fundraiser if goal is not met by the deadline. An option will be given to donors at this point if they want to claim their donation back or allow the fundraiser to continue.
 2. Allow fundraiser creators to verify themselves - this will allow the Sybil attack fee to be removed.
