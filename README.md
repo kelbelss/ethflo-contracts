@@ -1,9 +1,9 @@
 ![EthFlo Logo](./images/textandlogo.png)
 
-**EthFlo, derived from the Latin word 'Efflo' meaning 'to blossom', is a crowdfunding platform which embodies the spirit of potential and growth, utilising smart contracts built with Solidity and Foundry.**
+*EthFlo, derived from the Latin word 'Efflo' meaning 'to blossom', is a crowdfunding platform which embodies the spirit of potential and growth, utilising smart contracts built with Solidity and Foundry.*
 
 
-## About
+## About 📄
 
 EthFlo is a fundraising platform that allows users to create a fundraiser or donate to other users and gain ERC20 tokens as rewards in proportion to their contribution.
 
@@ -18,7 +18,7 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 
 The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link - [EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x90F897AF3c3780A68eB198ddAc574C994911604b)
 
-## Test Coverage
+## Test Coverage 📊
 
 | File                      | % Lines         | % Statements    | % Branches      | % Funcs       |
 |---------------------------|-----------------|-----------------|-----------------|---------------|
