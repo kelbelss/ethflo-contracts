@@ -19,8 +19,6 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 - **Donor Token Claim**: Once a fundraiser has met its goal in the specified deadline, each donor will be able to claim EthFlo tokens in proportion to their donation. 
 - **Donor Donation Claim**: If a fundraiser is not successful, each donor will be able to withdraw their donated amount by claiming it back. This USDT will come directly from Aave.
 
-This contract is currently deployed on the Sepolia Testnet.
-
 
 ## Test Coverage
 
