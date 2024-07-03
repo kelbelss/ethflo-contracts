@@ -16,7 +16,8 @@ contract DeployEthFloScript is Script {
 
         vm.startBroadcast(privateKey);
         EthFlo ethFlo =
-            new EthFlo(0xdAC17F958D2ee523a2206206994597C13D831ec7, 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2);
+            new EthFlo(0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0, 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951);
+        // 0xaf0f6E8b0DC5C913bBF4d14C22B4e78dB875A937
 
         vm.stopBroadcast();
 
