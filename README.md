@@ -1,4 +1,4 @@
-![EthFlo Logo](./images/logo.png)
+![EthFlo Logo](./images/textandlogo.png)
 
 **EthFlo, derived from the Latin word 'Efflo' meaning 'to blossom', is a crowdfunding platform which embodies the spirit of potential and growth, utilising smart contracts built with Solidity and Foundry.**
 
