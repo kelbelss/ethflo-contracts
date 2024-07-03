@@ -16,9 +16,7 @@ EthFlo is a fundraising platform that allows users to create a fundraiser or don
 
 ## Contract Address
 
-The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link:
-
-[EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x90F897AF3c3780A68eB198ddAc574C994911604b)
+The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link - [EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x90F897AF3c3780A68eB198ddAc574C994911604b)
 
 ## Test Coverage
 
