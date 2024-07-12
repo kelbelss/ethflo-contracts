@@ -5,7 +5,7 @@
 
 ## About 📄
 
-EthFlo is a fundraising platform that allows users to create a fundraiser or donate to other users and gain ERC20 tokens as rewards in proportion to their contribution.
+EthFlo is a yield-powered crowdfunding protocol where donations are made in the stablecoin USDT and deposited into Aave to generate protocol revenue.
 
 
 - **Create Fundraiser**: Users can create a fundraiser with a duration of 5 - 90 days and a goal of 10 - 100 million USDT. 
