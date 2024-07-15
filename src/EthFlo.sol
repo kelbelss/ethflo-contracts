@@ -25,12 +25,14 @@ contract EthFlo is ERC20, Ownable {
     error EthFlo_FundraiserStillActive();
     error EthFlo_GoalNotReached();
     error EthFlo_IncorrectFundraiserOwner();
+    error EthFlo_AlreadyClaimed();
     error EthFlo_NothingToClaim();
     error EthFlo_FundraiserWasUnsuccessful();
     error EthFlo_FundraiserWasSuccessful();
 
     struct Fundraiser {
         address creatorAddr;
+        bool claimed;
         uint256 deadline;
         uint256 goal;
         uint256 amountRaised;
@@ -80,6 +82,11 @@ contract EthFlo is ERC20, Ownable {
         AAVE_POOL.withdraw(address(USDT), feesAndYield, _to);
     }
 
+    /**
+     * @notice
+     * @param
+     * @return
+     */
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
 
@@ -96,7 +103,7 @@ contract EthFlo is ERC20, Ownable {
         uint256 id = s_fundraiserCount;
         ++id;
 
-        fundraisers[id] = Fundraiser(msg.sender, _deadline, _goal, 0);
+        fundraisers[id] = Fundraiser(msg.sender, false, _deadline, _goal, 0);
 
         s_fundraiserCount = id;
 
@@ -105,6 +112,10 @@ contract EthFlo is ERC20, Ownable {
         return id;
     }
 
+    /**
+     * @notice
+     * @param
+     */
     function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
@@ -143,46 +154,55 @@ contract EthFlo is ERC20, Ownable {
         emit Donation(msg.sender, _fundraiserId, _amountDonated);
     }
 
+    /**
+     * @notice
+     * @param
+     */
     function creatorWithdraw(uint256 _fundraiserId) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
 
-        // Check: goal is reached by deadline
-        address creator = selectedFundraiser.creatorAddr;
-        uint256 goal = selectedFundraiser.goal;
-        uint256 deadline = selectedFundraiser.deadline;
-        uint256 amountRaised = selectedFundraiser.amountRaised;
+        // Checks
 
         // Checks: 1. if caller is the creator
-        if (msg.sender != creator) {
+        if (msg.sender != selectedFundraiser.creatorAddr) {
             revert EthFlo_IncorrectFundraiserOwner();
         }
 
-        // TODO
         // Checks: 2. if claim has been made already
+        if (selectedFundraiser.claimed) {
+            revert EthFlo_AlreadyClaimed();
+        }
 
         // Checks: 3. if deadline has been reached
-        if (block.timestamp < deadline) {
+        if (block.timestamp < selectedFundraiser.deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 4. if goal is reached
-        if (amountRaised < goal) {
+        if (selectedFundraiser.amountRaised < selectedFundraiser.goal) {
             revert EthFlo_GoalNotReached();
         }
 
         // Deduct 5% fee
-        uint256 amountAfterFee = amountRaised * (100 - ADMIN_FEE) / 100;
+        uint256 amountAfterFee = selectedFundraiser.amountRaised * (100 - ADMIN_FEE) / 100;
 
         // Withdraw funds from AAVE and send to EthFlo
         AAVE_POOL.withdraw(address(USDT), amountAfterFee, msg.sender);
 
         // Update accounting - deduct full amount donated from escrow to account for fees
-        s_totalEscrowedFunds -= amountRaised;
+        s_totalEscrowedFunds -= selectedFundraiser.amountRaised;
+
+        // set claimed to true to avoid double claims
+        fundraisers[_fundraiserId].claimed = true;
 
         // Event
         emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
     }
 
+    /**
+     * @notice
+     * @param
+     */
     function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) external {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
         uint256 amountDonated = donorsAmount[msg.sender][_fundraiserId];
@@ -220,6 +240,10 @@ contract EthFlo is ERC20, Ownable {
         emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
     }
 
+    /**
+     * @notice
+     * @param
+     */
     function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) external {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
         uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];

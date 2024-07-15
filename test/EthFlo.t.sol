@@ -157,7 +157,8 @@ contract EthFloTest is Test {
 
         // check variables were set correctly
 
-        (address _creator, uint256 _deadline, uint256 _goal, uint256 _amountRaised) = ethFlo.fundraisers(id);
+        (address _creator, bool _claimed, uint256 _deadline, uint256 _goal, uint256 _amountRaised) =
+            ethFlo.fundraisers(id);
 
         assertEq(_creator, CREATOR, "Creator not set correctly");
         assertEq(_deadline, block.timestamp + 6 days, "Deadline not set correctly");
@@ -202,7 +203,7 @@ contract EthFloTest is Test {
         console.log("EthFlo USDT balance after donation", USDT.balanceOf(address(ethFlo)));
         console.log("EthFlo aUSDT balance after donation", aUSDTBalance);
 
-        (,,, uint256 amountRaised) = ethFlo.fundraisers(1);
+        (,,,, uint256 amountRaised) = ethFlo.fundraisers(1);
         console.log("Fundraiser 1 amount raised", amountRaised);
         console.log("Donor's donation amount", ethFlo.donorsAmount(DONOR, 1));
     }
@@ -292,6 +293,29 @@ contract EthFloTest is Test {
         // creator withdraw
         vm.warp(block.timestamp + 100 days);
         vm.expectRevert(EthFlo.EthFlo_IncorrectFundraiserOwner.selector);
+        ethFlo.creatorWithdraw(1);
+    }
+
+    function test_creatorWithdraw_fail_EthFlo_AlreadyClaimed() public {
+        // create fundraiser
+        _createFunctionForTests(block.timestamp + 5 days, 20e6);
+        assertEq(USDT.balanceOf(address(ethFlo)), 0);
+        // make donation
+        vm.startPrank(DONOR);
+        USDT.forceApprove(address(ethFlo), 25e6);
+        ethFlo.donate(1, 25e6);
+
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(ethFlo));
+        assertEq(aUSDTBalance, 25e6);
+        console.log("aUSDT balance after donation", aUSDTBalance);
+
+        vm.stopPrank();
+        // creator withdraw
+        vm.startPrank(CREATOR);
+        vm.warp(block.timestamp + 100 days);
+        ethFlo.creatorWithdraw(1);
+
+        vm.expectRevert(EthFlo.EthFlo_AlreadyClaimed.selector);
         ethFlo.creatorWithdraw(1);
     }
 
