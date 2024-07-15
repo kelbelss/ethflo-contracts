@@ -13,5 +13,3 @@ docs/
 # Dotenv file
 .env
 fmt.txt
-
-.DS_Store
