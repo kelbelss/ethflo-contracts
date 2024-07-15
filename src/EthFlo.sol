@@ -25,7 +25,7 @@ contract EthFlo is ERC20, Ownable {
     error EthFlo_FundraiserStillActive();
     error EthFlo_GoalNotReached();
     error EthFlo_IncorrectFundraiserOwner();
-    error EthFlo_NotYourDonation();
+    error EthFlo_NothingToClaim();
     error EthFlo_FundraiserWasUnsuccessful();
     error EthFlo_FundraiserWasSuccessful();
 
@@ -123,17 +123,11 @@ contract EthFlo is ERC20, Ownable {
             revert EthFlo_MinimumDonationNotMet();
         }
 
-        // Mapping - donor projects mapping - address to array of id projects donated too with amount
-        //      mapping (address donor => idArray[] and amounts) public donorsDifferentDonationsIds;
-
         // donorsAmount Mapping update - fundraisers id and amount donated by donor
-        donorsAmount[msg.sender][_fundraiserId] = _amountDonated;
+        donorsAmount[msg.sender][_fundraiserId] += _amountDonated;
 
         // fundraiser Mapping update - amount raised per fundraiser
         fundraisers[_fundraiserId].amountRaised += _amountDonated;
-
-        // mapping (uint256 id => address donorAddr) public donorDonated;
-        // donorDonated[_fundraiserId] = msg.sender;
 
         // Receive funds
         USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
@@ -163,12 +157,15 @@ contract EthFlo is ERC20, Ownable {
             revert EthFlo_IncorrectFundraiserOwner();
         }
 
-        // Checks: 2. if deadline has been reached
+        // TODO
+        // Checks: 2. if claim has been made already
+
+        // Checks: 3. if deadline has been reached
         if (block.timestamp < deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
-        // Checks: 3. if goal is reached
+        // Checks: 4. if goal is reached
         if (amountRaised < goal) {
             revert EthFlo_GoalNotReached();
         }
@@ -178,9 +175,6 @@ contract EthFlo is ERC20, Ownable {
 
         // Withdraw funds from AAVE and send to EthFlo
         AAVE_POOL.withdraw(address(USDT), amountAfterFee, msg.sender);
-
-        // Send funds to creator
-        // USDT.safeTransfer(msg.sender, amountAfterFee);
 
         // Update accounting - deduct full amount donated from escrow to account for fees
         s_totalEscrowedFunds -= amountRaised;
@@ -202,7 +196,7 @@ contract EthFlo is ERC20, Ownable {
 
         // Check 1. if caller is the donor
         if (amountDonated == 0) {
-            revert EthFlo_NotYourDonation();
+            revert EthFlo_NothingToClaim();
         }
 
         // Checks: 2. check if fundraiser deadline has passed
@@ -218,6 +212,9 @@ contract EthFlo is ERC20, Ownable {
         uint256 amountOfTokens = amountDonated * USDT_TO_ETHFLO_DECIMALS;
 
         _mint(msg.sender, amountOfTokens);
+
+        // set donorsAmount to 0
+        donorsAmount[msg.sender][_fundraiserId] = 0;
 
         // Event
         emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
@@ -236,7 +233,7 @@ contract EthFlo is ERC20, Ownable {
 
         // Checks: 1. if caller is the donor
         if (amountToBeReturned == 0) {
-            revert EthFlo_NotYourDonation();
+            revert EthFlo_NothingToClaim();
         }
 
         // Checks: 2. check if fundraiser deadline has passed
@@ -249,14 +246,14 @@ contract EthFlo is ERC20, Ownable {
             revert EthFlo_FundraiserWasSuccessful();
         }
 
-        // Refund donor
-        // USDT.safeTransfer(msg.sender, amountToBeReturned);
-
         // Withdraw funds from AAVE and send to donor
         AAVE_POOL.withdraw(address(USDT), amountToBeReturned, msg.sender);
 
         // Update accounting
         s_totalEscrowedFunds -= amountToBeReturned;
+
+        // set donorsAmount to 0
+        donorsAmount[msg.sender][_fundraiserId] = 0;
 
         // Event
         emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);

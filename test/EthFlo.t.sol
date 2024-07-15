@@ -405,7 +405,7 @@ contract EthFloTest is Test {
         console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
     }
 
-    function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {
+    function test_claimRewardForSuccessfulFundraiser_fail_EthFlo_NothingToClaim() public {
         // create fundraiser
         _createFunctionForTests(block.timestamp + 5 days, 20e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 0);
@@ -416,7 +416,7 @@ contract EthFloTest is Test {
         console.log("EthFlo balance after donation", USDT.balanceOf(address(ethFlo)));
         // claim reward
         vm.warp(block.timestamp + 100 days);
-        vm.expectRevert(EthFlo.EthFlo_NotYourDonation.selector);
+        vm.expectRevert(EthFlo.EthFlo_NothingToClaim.selector);
         ethFlo.claimRewardForSuccessfulFundraiser(1);
         assertEq(ethFlo.balanceOf(DONOR), 0);
         console.log("Donors EthFlo balance", ethFlo.balanceOf(DONOR));
@@ -495,7 +495,7 @@ contract EthFloTest is Test {
         console.log("EthFlo aUSD balance after withdraw", aUSDTBalance);
     }
 
-    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_NotYourDonation() public {
+    function test_withdrawDonationFromUnsuccessfulFundraiser_fail_EthFlo_NothingToClaim() public {
         // create fundraiser
         _createFunctionForTests(block.timestamp + 5 days, 30e6);
         assertEq(USDT.balanceOf(address(ethFlo)), 0);
@@ -511,7 +511,7 @@ contract EthFloTest is Test {
         vm.stopPrank();
         // withdraw donation
         vm.warp(block.timestamp + 100 days);
-        vm.expectRevert(EthFlo.EthFlo_NotYourDonation.selector);
+        vm.expectRevert(EthFlo.EthFlo_NothingToClaim.selector);
         ethFlo.withdrawDonationFromUnsuccessfulFundraiser(1);
 
         console.log("EthFlo balance after withdraw", USDT.balanceOf(address(ethFlo)));
