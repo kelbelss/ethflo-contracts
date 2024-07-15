@@ -10,11 +10,15 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title EthFlo Contract
  * @author Kelly Smulian
- * @notice This contract is for creating a crowdfunding program
- * @dev
+ * @notice This contract implements a crowdfunding platform with USDT donations and AAVE yield generation
+ * @dev Inherits from ERC20 for reward token functionality and Ownable for access control
  */
 contract EthFlo is ERC20, Ownable {
     using SafeERC20 for IERC20;
+
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
 
     error EthFlo_NoFeesAndYieldAvailable();
     error EthFlo_DeadlineError();
@@ -30,6 +34,14 @@ contract EthFlo is ERC20, Ownable {
     error EthFlo_FundraiserWasUnsuccessful();
     error EthFlo_FundraiserWasSuccessful();
 
+    /*//////////////////////////////////////////////////////////////
+                                 STRUCTS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Struct to store information about each fundraiser
+     * @dev Used in the fundraisers mapping
+     */
     struct Fundraiser {
         address creatorAddr;
         bool claimed;
@@ -38,7 +50,14 @@ contract EthFlo is ERC20, Ownable {
         uint256 amountRaised;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Mapping of fundraiser IDs to Fundraiser structs
     mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
+
+    /// @notice Mapping of donor addresses to fundraiser IDs to donation amounts
     mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
 
     uint256 public constant MIN_DURATION = 5 days;
@@ -49,43 +68,66 @@ contract EthFlo is ERC20, Ownable {
     uint256 public constant ADMIN_FEE = 5; // 5%
     uint256 public constant USDT_TO_ETHFLO_DECIMALS = 1e12;
     address public aUSDT_ADDRESS;
+
+    /// @notice The USDT token contract
     IERC20 public immutable USDT;
+
+    /// @notice The Aave lending pool contract
     IPool public immutable AAVE_POOL;
+
+    /// @notice The total number of fundraisers created
     uint256 public s_fundraiserCount;
+
+    /// @notice The total amount of funds currently held in escrow
     uint256 public s_totalEscrowedFunds;
 
-    // AAVE INTERACTION
-    // address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
-    // address constant USDT_ADDRESS = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
+    /// @notice Emitted when a new fundraiser is created
     event CreateFundraiser(address indexed creatorAddr, uint256 deadline, uint256 goal);
+
+    /// @notice Emitted when a donation is made to a fundraiser
     event Donation(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
+
+    /// @notice Emitted when funds are withdrawn by a fundraiser creator
     event FundsWithdrawn(address indexed creatorAddr, uint256 indexed fundraiserId, uint256 amountReceived);
+
+    /// @notice Emitted when a donor's funds are returned from an unsuccessful fundraiser
     event DonorFundsReturned(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amount);
+
+    /// @notice Emitted when reward tokens are claimed by a donor
     event TokensClaimed(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amountClaimed);
 
+    /*//////////////////////////////////////////////////////////////
+                               CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Initializes the EthFlo contract
+     * @param _usdtAddress The address of the USDT token contract
+     * @param _aavePool The address of the Aave lending pool
+     */
     constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
         USDT = IERC20(_usdtAddress);
         AAVE_POOL = IPool(_aavePool);
         aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress;
     }
 
-    function withdrawFeesAndYield(address _to) external onlyOwner {
-        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(this));
-
-        uint256 feesAndYield = aUSDTBalance - s_totalEscrowedFunds;
-
-        if (feesAndYield == 0) {
-            revert EthFlo_NoFeesAndYieldAvailable();
-        }
-
-        AAVE_POOL.withdraw(address(USDT), feesAndYield, _to);
-    }
+    /*//////////////////////////////////////////////////////////////
+                              MAIN FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice
-     * @param
-     * @return
+     * @notice Creates a new fundraiser
+     * @dev The fundraiser duration must be within the allowed range, and the goal must be between the minimum and maximum allowed amounts
+     * @param _deadline The timestamp when the fundraiser will end
+     * @param _goal The fundraising goal in USDT
+     * @return id The unique identifier of the newly created fundraiser
+     * @custom:throws EthFlo_DeadlineError If the fundraiser duration is outside the allowed range
+     * @custom:throws EthFlo_GoalError If the fundraising goal is outside the allowed range
+     * @custom:emits CreateFundraiser when a new fundraiser is successfully created
      */
     function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
         // Checks for deadline and goal
@@ -113,8 +155,14 @@ contract EthFlo is ERC20, Ownable {
     }
 
     /**
-     * @notice
-     * @param
+     * @notice Allows a user to donate to a specific fundraiser
+     * @dev This function can only be called for existing and active fundraisers
+     * @param _fundraiserId The ID of the fundraiser to donate to
+     * @param _amountDonated The amount of USDT to donate
+     * @custom:throws EthFlo_FundraiserDoesNotExist If the specified fundraiser does not exist
+     * @custom:throws EthFlo_FundraiserDeadlineHasPassed If the fundraiser's deadline has already passed
+     * @custom:throws EthFlo_MinimumDonationNotMet If the donation amount is less than the minimum required
+     * @custom:emits Donation when the donation is successfully processed
      */
     function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
@@ -155,8 +203,14 @@ contract EthFlo is ERC20, Ownable {
     }
 
     /**
-     * @notice
-     * @param
+     * @notice Allows the creator of a successful fundraiser to withdraw the raised funds
+     * @dev This function can only be called by the fundraiser creator after the deadline has passed and if the goal was reached
+     * @param _fundraiserId The ID of the successful fundraiser from which to withdraw funds
+     * @custom:throws EthFlo_IncorrectFundraiserOwner If the caller is not the creator of the fundraiser
+     * @custom:throws EthFlo_AlreadyClaimed If the funds have already been claimed
+     * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
+     * @custom:throws EthFlo_GoalNotReached If the fundraiser did not reach its goal
+     * @custom:emits FundsWithdrawn when the funds are successfully withdrawn by the creator
      */
     function creatorWithdraw(uint256 _fundraiserId) external {
         Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
@@ -200,8 +254,13 @@ contract EthFlo is ERC20, Ownable {
     }
 
     /**
-     * @notice
-     * @param
+     * @notice Allows a donor to claim reward tokens for a successful fundraiser
+     * @dev This function can only be called after the fundraiser deadline has passed and if the fundraiser reached its goal
+     * @param _fundraiserId The ID of the successful fundraiser for which to claim reward tokens
+     * @custom:throws EthFlo_NothingToClaim If the caller has no tokens to claim from this fundraiser
+     * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
+     * @custom:throws EthFlo_FundraiserWasUnsuccessful If the fundraiser did not reach its goal
+     * @custom:emits TokensClaimed when the reward tokens are successfully minted to the donor
      */
     function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) external {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
@@ -241,8 +300,13 @@ contract EthFlo is ERC20, Ownable {
     }
 
     /**
-     * @notice
-     * @param
+     * @notice Allows a donor to withdraw their donation from an unsuccessful fundraiser
+     * @dev This function can only be called after the fundraiser deadline has passed and if the fundraiser did not reach its goal
+     * @param _fundraiserId The ID of the fundraiser from which to withdraw the donation
+     * @custom:throws EthFlo_NothingToClaim If the caller has no funds to claim from this fundraiser
+     * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
+     * @custom:throws EthFlo_FundraiserWasSuccessful If the fundraiser reached or exceeded its goal
+     * @custom:emits DonorFundsReturned when the funds are successfully returned to the donor
      */
     function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) external {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
@@ -283,7 +347,33 @@ contract EthFlo is ERC20, Ownable {
         emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                             VIEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     function getTotalEscrowedFunds() external view returns (uint256) {
         return s_totalEscrowedFunds;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            ADMIN FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Allows the contract owner to withdraw accumulated fees and yield
+     * @dev This function can only be called by the contract owner
+     * @param _to The address to receive the withdrawn fees and yield
+     * @custom:throws EthFlo_NoFeesAndYieldAvailable If there are no fees or yield to withdraw
+     */
+    function withdrawFeesAndYield(address _to) external onlyOwner {
+        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(this));
+
+        uint256 feesAndYield = aUSDTBalance - s_totalEscrowedFunds;
+
+        if (feesAndYield == 0) {
+            revert EthFlo_NoFeesAndYieldAvailable();
+        }
+
+        AAVE_POOL.withdraw(address(USDT), feesAndYield, _to);
     }
 }
