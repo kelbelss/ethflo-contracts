@@ -16,7 +16,7 @@ EthFlo is a yield-powered crowdfunding protocol where donations are made in the 
 
 ## Contract Address 🔗
 
-The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link - [EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x90F897AF3c3780A68eB198ddAc574C994911604b)
+The EthFlo contract is deployed on the Sepolia network. You can view the contract on Etherscan using the following link - [EthFlo Contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x189CBb5B4124d2eA6c997b9f0b4013D7DEA492fc)
 
 ## Test Coverage 📊
 
