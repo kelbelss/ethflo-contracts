@@ -169,15 +169,15 @@ contract EthFlo is ERC20, Ownable {
      * @custom:emits Donation when the donation is successfully processed
      */
     function donate(uint256 fundraiserId, uint256 amountDonated) external {
-        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
+        uint256 _deadline = fundraisers[fundraiserId].deadline;
 
         // Checks: 1. if fundraiser exists
-        if (_selectedFundraiser.goal == 0) {
+        if (_deadline == 0) {
             revert EthFlo_FundraiserDoesNotExist();
         }
 
         // Checks: 2. if fundraiser is still active
-        if (block.timestamp > _selectedFundraiser.deadline) {
+        if (block.timestamp > _deadline) {
             revert EthFlo_FundraiserDeadlineHasPassed();
         }
 
@@ -270,22 +270,23 @@ contract EthFlo is ERC20, Ownable {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
         uint256 _amountDonated = donorsAmount[msg.sender][fundraiserId];
 
-        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
-
-        // Checks
-
         // Check 1. if caller is the donor
         if (_amountDonated == 0) {
             revert EthFlo_NothingToClaim();
         }
 
+        // SLOAD operations
+        uint256 _deadline = fundraisers[fundraiserId].deadline;
+        uint256 _amountRaised = fundraisers[fundraiserId].amountRaised;
+        uint256 _goal = fundraisers[fundraiserId].goal;
+
         // Checks: 2. check if fundraiser deadline has passed
-        if (block.timestamp < _selectedFundraiser.deadline) {
+        if (block.timestamp < _deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 3. if fundraiser succeeded
-        if (_selectedFundraiser.amountRaised < _selectedFundraiser.goal) {
+        if (_amountRaised < _goal) {
             revert EthFlo_FundraiserWasUnsuccessful();
         }
 
@@ -313,22 +314,23 @@ contract EthFlo is ERC20, Ownable {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
         uint256 _amountToBeReturned = donorsAmount[msg.sender][fundraiserId];
 
-        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
-
-        // Checks
-
         // Checks: 1. if caller is the donor
         if (_amountToBeReturned == 0) {
             revert EthFlo_NothingToClaim();
         }
 
+        // SLOAD operations
+        uint256 _deadline = fundraisers[fundraiserId].deadline;
+        uint256 _amountRaised = fundraisers[fundraiserId].amountRaised;
+        uint256 _goal = fundraisers[fundraiserId].goal;
+
         // Checks: 2. check if fundraiser deadline has passed
-        if (block.timestamp < _selectedFundraiser.deadline) {
+        if (block.timestamp < _deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 3. if fundraiser succeeded
-        if (_selectedFundraiser.amountRaised >= _selectedFundraiser.goal) {
+        if (_amountRaised >= _goal) {
             revert EthFlo_FundraiserWasSuccessful();
         }
 
