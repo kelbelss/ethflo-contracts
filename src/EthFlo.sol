@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.22;
+pragma solidity 0.8.25;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,24 +17,6 @@ contract EthFlo is ERC20, Ownable {
     using SafeERC20 for IERC20;
 
     /*//////////////////////////////////////////////////////////////
-                                 ERRORS
-    //////////////////////////////////////////////////////////////*/
-
-    error EthFlo_NoFeesAndYieldAvailable();
-    error EthFlo_DeadlineError();
-    error EthFlo_GoalError();
-    error EthFlo_FundraiserDoesNotExist();
-    error EthFlo_FundraiserDeadlineHasPassed();
-    error EthFlo_MinimumDonationNotMet();
-    error EthFlo_FundraiserStillActive();
-    error EthFlo_GoalNotReached();
-    error EthFlo_IncorrectFundraiserOwner();
-    error EthFlo_AlreadyClaimed();
-    error EthFlo_NothingToClaim();
-    error EthFlo_FundraiserWasUnsuccessful();
-    error EthFlo_FundraiserWasSuccessful();
-
-    /*//////////////////////////////////////////////////////////////
                                  STRUCTS
     //////////////////////////////////////////////////////////////*/
 
@@ -43,31 +25,28 @@ contract EthFlo is ERC20, Ownable {
      * @dev Used in the fundraisers mapping
      */
     struct Fundraiser {
-        address creatorAddr;
-        bool claimed;
         uint256 deadline;
         uint256 goal;
         uint256 amountRaised;
+        bool claimed;
+        address creatorAddr;
     }
 
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Mapping of fundraiser IDs to Fundraiser structs
-    mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
-
-    /// @notice Mapping of donor addresses to fundraiser IDs to donation amounts
-    mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
-
     uint256 public constant MIN_DURATION = 5 days;
-    uint256 public constant MAX_DURATION = 90 days; // $10
+    uint256 public constant MAX_DURATION = 90 days;
     uint256 public constant MIN_GOAL = 10e6; // $10
     uint256 public constant MAX_GOAL = 100_000_000e6; // $100 million
-    uint256 public constant MINIMUM_DONATION = 10000000; // $10
+    uint256 public constant MINIMUM_DONATION = 10e6; // $10
     uint256 public constant ADMIN_FEE = 5; // 5%
     uint256 public constant USDT_TO_ETHFLO_DECIMALS = 1e12;
-    address public aUSDT_ADDRESS;
+    uint256 public constant SCALE = 100;
+
+    /// @notice The aUSDT token address
+    IERC20 public immutable aUSDT_ADDRESS;
 
     /// @notice The USDT token contract
     IERC20 public immutable USDT;
@@ -76,10 +55,16 @@ contract EthFlo is ERC20, Ownable {
     IPool public immutable AAVE_POOL;
 
     /// @notice The total number of fundraisers created
-    uint256 public s_fundraiserCount;
+    uint256 internal s_fundraiserCount;
 
     /// @notice The total amount of funds currently held in escrow
-    uint256 public s_totalEscrowedFunds;
+    uint256 internal s_totalEscrowedFunds;
+
+    /// @notice Mapping of fundraiser IDs to Fundraiser structs
+    mapping(uint256 fundraiserId => Fundraiser fundraiser) public fundraisers;
+
+    /// @notice Mapping of donor addresses to fundraiser IDs to donation amounts
+    mapping(address donor => mapping(uint256 id => uint256 amount)) public donorsAmount;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -101,6 +86,24 @@ contract EthFlo is ERC20, Ownable {
     event TokensClaimed(address indexed donorAddr, uint256 indexed fundraiserId, uint256 amountClaimed);
 
     /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error EthFlo_NoFeesAndYieldAvailable();
+    error EthFlo_DeadlineError();
+    error EthFlo_GoalError();
+    error EthFlo_FundraiserDoesNotExist();
+    error EthFlo_FundraiserDeadlineHasPassed();
+    error EthFlo_MinimumDonationNotMet();
+    error EthFlo_FundraiserStillActive();
+    error EthFlo_GoalNotReached();
+    error EthFlo_IncorrectFundraiserOwner();
+    error EthFlo_AlreadyClaimed();
+    error EthFlo_NothingToClaim();
+    error EthFlo_FundraiserWasUnsuccessful();
+    error EthFlo_FundraiserWasSuccessful();
+
+    /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
@@ -112,7 +115,7 @@ contract EthFlo is ERC20, Ownable {
     constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
         USDT = IERC20(_usdtAddress);
         AAVE_POOL = IPool(_aavePool);
-        aUSDT_ADDRESS = IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress;
+        aUSDT_ADDRESS = IERC20(IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -122,34 +125,35 @@ contract EthFlo is ERC20, Ownable {
     /**
      * @notice Creates a new fundraiser
      * @dev The fundraiser duration must be within the allowed range, and the goal must be between the minimum and maximum allowed amounts
-     * @param _deadline The timestamp when the fundraiser will end
-     * @param _goal The fundraising goal in USDT
+     * @param deadline The timestamp when the fundraiser will end
+     * @param goal The fundraising goal in USDT
      * @return id The unique identifier of the newly created fundraiser
      * @custom:throws EthFlo_DeadlineError If the fundraiser duration is outside the allowed range
      * @custom:throws EthFlo_GoalError If the fundraising goal is outside the allowed range
      * @custom:emits CreateFundraiser when a new fundraiser is successfully created
      */
-    function createFundraiser(uint256 _deadline, uint256 _goal) external returns (uint256) {
+    function createFundraiser(uint256 deadline, uint256 goal) external returns (uint256) {
         // Checks for deadline and goal
 
-        uint256 duration = _deadline - block.timestamp;
+        uint256 _duration = deadline - block.timestamp;
 
-        if (duration < MIN_DURATION || duration > MAX_DURATION) {
+        if (_duration < MIN_DURATION || _duration > MAX_DURATION) {
             revert EthFlo_DeadlineError();
         }
 
-        if (_goal < MIN_GOAL || _goal > MAX_GOAL) {
+        if (goal < MIN_GOAL || goal > MAX_GOAL) {
             revert EthFlo_GoalError();
         }
 
         uint256 id = s_fundraiserCount;
         ++id;
 
-        fundraisers[id] = Fundraiser(msg.sender, false, _deadline, _goal, 0);
+        fundraisers[id] =
+            Fundraiser({deadline: deadline, goal: goal, amountRaised: 0, claimed: false, creatorAddr: msg.sender});
 
         s_fundraiserCount = id;
 
-        emit CreateFundraiser(msg.sender, _deadline, _goal);
+        emit CreateFundraiser(msg.sender, deadline, goal);
 
         return id;
     }
@@ -157,199 +161,197 @@ contract EthFlo is ERC20, Ownable {
     /**
      * @notice Allows a user to donate to a specific fundraiser
      * @dev This function can only be called for existing and active fundraisers
-     * @param _fundraiserId The ID of the fundraiser to donate to
-     * @param _amountDonated The amount of USDT to donate
+     * @param fundraiserId The ID of the fundraiser to donate to
+     * @param amountDonated The amount of USDT to donate
      * @custom:throws EthFlo_FundraiserDoesNotExist If the specified fundraiser does not exist
      * @custom:throws EthFlo_FundraiserDeadlineHasPassed If the fundraiser's deadline has already passed
      * @custom:throws EthFlo_MinimumDonationNotMet If the donation amount is less than the minimum required
      * @custom:emits Donation when the donation is successfully processed
      */
-    function donate(uint256 _fundraiserId, uint256 _amountDonated) external {
-        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+    function donate(uint256 fundraiserId, uint256 amountDonated) external {
+        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
 
         // Checks: 1. if fundraiser exists
-        if (selectedFundraiser.goal == 0) {
+        if (_selectedFundraiser.goal == 0) {
             revert EthFlo_FundraiserDoesNotExist();
         }
 
         // Checks: 2. if fundraiser is still active
-        if (block.timestamp > selectedFundraiser.deadline) {
+        if (block.timestamp > _selectedFundraiser.deadline) {
             revert EthFlo_FundraiserDeadlineHasPassed();
         }
 
         // Checks: 3. if minimum amount is reached
-        if (_amountDonated < MINIMUM_DONATION) {
+        if (amountDonated < MINIMUM_DONATION) {
             revert EthFlo_MinimumDonationNotMet();
         }
 
         // donorsAmount Mapping update - fundraisers id and amount donated by donor
-        donorsAmount[msg.sender][_fundraiserId] += _amountDonated;
+        donorsAmount[msg.sender][fundraiserId] += amountDonated;
 
         // fundraiser Mapping update - amount raised per fundraiser
-        fundraisers[_fundraiserId].amountRaised += _amountDonated;
-
-        // Receive funds
-        USDT.safeTransferFrom(msg.sender, address(this), _amountDonated);
+        fundraisers[fundraiserId].amountRaised += amountDonated;
 
         // Update accounting
-        s_totalEscrowedFunds += _amountDonated;
+        s_totalEscrowedFunds += amountDonated;
+
+        // Receive funds
+        USDT.safeTransferFrom(msg.sender, address(this), amountDonated);
 
         // Send funds to AAVE to earn yield
-        IERC20(USDT).forceApprove(address(AAVE_POOL), _amountDonated);
-        AAVE_POOL.supply(address(USDT), _amountDonated, address(this), 0);
+        IERC20(USDT).forceApprove(address(AAVE_POOL), amountDonated);
+        AAVE_POOL.supply(address(USDT), amountDonated, address(this), 0);
 
         // Event
-        emit Donation(msg.sender, _fundraiserId, _amountDonated);
+        emit Donation(msg.sender, fundraiserId, amountDonated);
     }
 
     /**
      * @notice Allows the creator of a successful fundraiser to withdraw the raised funds
      * @dev This function can only be called by the fundraiser creator after the deadline has passed and if the goal was reached
-     * @param _fundraiserId The ID of the successful fundraiser from which to withdraw funds
+     * @param fundraiserId The ID of the successful fundraiser from which to withdraw funds
      * @custom:throws EthFlo_IncorrectFundraiserOwner If the caller is not the creator of the fundraiser
      * @custom:throws EthFlo_AlreadyClaimed If the funds have already been claimed
      * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
      * @custom:throws EthFlo_GoalNotReached If the fundraiser did not reach its goal
      * @custom:emits FundsWithdrawn when the funds are successfully withdrawn by the creator
      */
-    function creatorWithdraw(uint256 _fundraiserId) external {
-        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
+    function creatorWithdraw(uint256 fundraiserId) external {
+        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
 
         // Checks
 
         // Checks: 1. if caller is the creator
-        if (msg.sender != selectedFundraiser.creatorAddr) {
+        if (msg.sender != _selectedFundraiser.creatorAddr) {
             revert EthFlo_IncorrectFundraiserOwner();
         }
 
         // Checks: 2. if claim has been made already
-        if (selectedFundraiser.claimed) {
+        if (_selectedFundraiser.claimed) {
             revert EthFlo_AlreadyClaimed();
         }
 
         // Checks: 3. if deadline has been reached
-        if (block.timestamp < selectedFundraiser.deadline) {
+        if (block.timestamp < _selectedFundraiser.deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 4. if goal is reached
-        if (selectedFundraiser.amountRaised < selectedFundraiser.goal) {
+        if (_selectedFundraiser.amountRaised < _selectedFundraiser.goal) {
             revert EthFlo_GoalNotReached();
         }
 
         // Deduct 5% fee
-        uint256 amountAfterFee = selectedFundraiser.amountRaised * (100 - ADMIN_FEE) / 100;
+        uint256 _amountAfterFee = _selectedFundraiser.amountRaised * (SCALE - ADMIN_FEE) / SCALE;
 
         // Withdraw funds from AAVE and send to EthFlo
-        AAVE_POOL.withdraw(address(USDT), amountAfterFee, msg.sender);
+        AAVE_POOL.withdraw(address(USDT), _amountAfterFee, msg.sender);
 
         // Update accounting - deduct full amount donated from escrow to account for fees
-        s_totalEscrowedFunds -= selectedFundraiser.amountRaised;
+        s_totalEscrowedFunds -= _selectedFundraiser.amountRaised;
 
         // set claimed to true to avoid double claims
-        fundraisers[_fundraiserId].claimed = true;
+        fundraisers[fundraiserId].claimed = true;
 
         // Event
-        emit FundsWithdrawn(msg.sender, _fundraiserId, amountAfterFee);
+        emit FundsWithdrawn(msg.sender, fundraiserId, _amountAfterFee);
     }
 
     /**
      * @notice Allows a donor to claim reward tokens for a successful fundraiser
      * @dev This function can only be called after the fundraiser deadline has passed and if the fundraiser reached its goal
-     * @param _fundraiserId The ID of the successful fundraiser for which to claim reward tokens
+     * @param fundraiserId The ID of the successful fundraiser for which to claim reward tokens
      * @custom:throws EthFlo_NothingToClaim If the caller has no tokens to claim from this fundraiser
      * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
      * @custom:throws EthFlo_FundraiserWasUnsuccessful If the fundraiser did not reach its goal
      * @custom:emits TokensClaimed when the reward tokens are successfully minted to the donor
      */
-    function claimRewardForSuccessfulFundraiser(uint256 _fundraiserId) external {
+    function claimRewardForSuccessfulFundraiser(uint256 fundraiserId) external {
         // mint tokens to donators in proportion to donation - only mint when goal is reached - let them claim them (and they pay gas)
-        uint256 amountDonated = donorsAmount[msg.sender][_fundraiserId];
+        uint256 _amountDonated = donorsAmount[msg.sender][fundraiserId];
 
-        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
-        uint256 deadline = selectedFundraiser.deadline;
-        uint256 goal = selectedFundraiser.goal;
-        uint256 amountRaised = selectedFundraiser.amountRaised;
+        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
 
         // Checks
 
         // Check 1. if caller is the donor
-        if (amountDonated == 0) {
+        if (_amountDonated == 0) {
             revert EthFlo_NothingToClaim();
         }
 
         // Checks: 2. check if fundraiser deadline has passed
-        if (block.timestamp < deadline) {
+        if (block.timestamp < _selectedFundraiser.deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 3. if fundraiser succeeded
-        if (amountRaised < goal) {
+        if (_selectedFundraiser.amountRaised < _selectedFundraiser.goal) {
             revert EthFlo_FundraiserWasUnsuccessful();
         }
 
-        uint256 amountOfTokens = amountDonated * USDT_TO_ETHFLO_DECIMALS;
-
-        _mint(msg.sender, amountOfTokens);
+        uint256 _amountOfTokens = _amountDonated * USDT_TO_ETHFLO_DECIMALS;
 
         // set donorsAmount to 0
-        donorsAmount[msg.sender][_fundraiserId] = 0;
+        donorsAmount[msg.sender][fundraiserId] = 0;
+
+        _mint(msg.sender, _amountOfTokens);
 
         // Event
-        emit TokensClaimed(msg.sender, _fundraiserId, amountOfTokens);
+        emit TokensClaimed(msg.sender, fundraiserId, _amountOfTokens);
     }
 
     /**
      * @notice Allows a donor to withdraw their donation from an unsuccessful fundraiser
      * @dev This function can only be called after the fundraiser deadline has passed and if the fundraiser did not reach its goal
-     * @param _fundraiserId The ID of the fundraiser from which to withdraw the donation
+     * @param fundraiserId The ID of the fundraiser from which to withdraw the donation
      * @custom:throws EthFlo_NothingToClaim If the caller has no funds to claim from this fundraiser
      * @custom:throws EthFlo_FundraiserStillActive If the fundraiser's deadline has not yet passed
      * @custom:throws EthFlo_FundraiserWasSuccessful If the fundraiser reached or exceeded its goal
      * @custom:emits DonorFundsReturned when the funds are successfully returned to the donor
      */
-    function withdrawDonationFromUnsuccessfulFundraiser(uint256 _fundraiserId) external {
+    function withdrawDonationFromUnsuccessfulFundraiser(uint256 fundraiserId) external {
         // return amount to donor if deadline not reached - claim refund (so they pay gas)
-        uint256 amountToBeReturned = donorsAmount[msg.sender][_fundraiserId];
+        uint256 _amountToBeReturned = donorsAmount[msg.sender][fundraiserId];
 
-        Fundraiser memory selectedFundraiser = fundraisers[_fundraiserId];
-        uint256 deadline = selectedFundraiser.deadline;
-        uint256 goal = selectedFundraiser.goal;
-        uint256 amountRaised = selectedFundraiser.amountRaised;
+        Fundraiser memory _selectedFundraiser = fundraisers[fundraiserId];
 
         // Checks
 
         // Checks: 1. if caller is the donor
-        if (amountToBeReturned == 0) {
+        if (_amountToBeReturned == 0) {
             revert EthFlo_NothingToClaim();
         }
 
         // Checks: 2. check if fundraiser deadline has passed
-        if (block.timestamp < deadline) {
+        if (block.timestamp < _selectedFundraiser.deadline) {
             revert EthFlo_FundraiserStillActive();
         }
 
         // Checks: 3. if fundraiser succeeded
-        if (amountRaised >= goal) {
+        if (_selectedFundraiser.amountRaised >= _selectedFundraiser.goal) {
             revert EthFlo_FundraiserWasSuccessful();
         }
 
-        // Withdraw funds from AAVE and send to donor
-        AAVE_POOL.withdraw(address(USDT), amountToBeReturned, msg.sender);
-
         // Update accounting
-        s_totalEscrowedFunds -= amountToBeReturned;
+        s_totalEscrowedFunds -= _amountToBeReturned;
 
         // set donorsAmount to 0
-        donorsAmount[msg.sender][_fundraiserId] = 0;
+        donorsAmount[msg.sender][fundraiserId] = 0;
+
+        // Withdraw funds from AAVE and send to donor - avoid reentrancy by doing it after acc update and donor amount set to 0
+        AAVE_POOL.withdraw(address(USDT), _amountToBeReturned, msg.sender);
 
         // Event
-        emit DonorFundsReturned(msg.sender, _fundraiserId, amountToBeReturned);
+        emit DonorFundsReturned(msg.sender, fundraiserId, _amountToBeReturned);
     }
 
     /*//////////////////////////////////////////////////////////////
                              VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    function getFundraiserCount() external view returns (uint256) {
+        return s_fundraiserCount;
+    }
 
     function getTotalEscrowedFunds() external view returns (uint256) {
         return s_totalEscrowedFunds;
@@ -362,18 +364,18 @@ contract EthFlo is ERC20, Ownable {
     /**
      * @notice Allows the contract owner to withdraw accumulated fees and yield
      * @dev This function can only be called by the contract owner
-     * @param _to The address to receive the withdrawn fees and yield
+     * @param to The address to receive the withdrawn fees and yield
      * @custom:throws EthFlo_NoFeesAndYieldAvailable If there are no fees or yield to withdraw
      */
-    function withdrawFeesAndYield(address _to) external onlyOwner {
-        uint256 aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(this));
+    function withdrawFeesAndYield(address to) external onlyOwner {
+        uint256 _aUSDTBalance = IERC20(aUSDT_ADDRESS).balanceOf(address(this));
 
-        uint256 feesAndYield = aUSDTBalance - s_totalEscrowedFunds;
+        uint256 _feesAndYield = _aUSDTBalance - s_totalEscrowedFunds;
 
-        if (feesAndYield == 0) {
+        if (_feesAndYield == 0) {
             revert EthFlo_NoFeesAndYieldAvailable();
         }
 
-        AAVE_POOL.withdraw(address(USDT), feesAndYield, _to);
+        AAVE_POOL.withdraw(address(USDT), _feesAndYield, to);
     }
 }
