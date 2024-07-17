@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.22;
+pragma solidity 0.8.25;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {StdUtils} from "lib/forge-std/src/StdUtils.sol";
@@ -52,7 +52,7 @@ contract EthFloTest is Test {
 
     function _createFunctionForTests(uint256 deadline, uint256 goal) internal {
         vm.startPrank(CREATOR);
-        ethFlo.createFundraiser({_deadline: deadline, _goal: goal});
+        ethFlo.createFundraiser({deadline: deadline, goal: goal});
         vm.stopPrank();
     }
 
@@ -153,17 +153,18 @@ contract EthFloTest is Test {
 
     function test_createFundraiser_success() public {
         vm.startPrank(CREATOR);
-        uint256 id = ethFlo.createFundraiser({_deadline: block.timestamp + 6 days, _goal: 50e6});
+        uint256 id = ethFlo.createFundraiser({deadline: block.timestamp + 6 days, goal: 50e6});
 
         // check variables were set correctly
 
-        (address _creator, bool _claimed, uint256 _deadline, uint256 _goal, uint256 _amountRaised) =
+        (uint256 _deadline, uint256 _goal, uint256 _amountRaised, bool _claimed, address _creator) =
             ethFlo.fundraisers(id);
 
-        assertEq(_creator, CREATOR, "Creator not set correctly");
         assertEq(_deadline, block.timestamp + 6 days, "Deadline not set correctly");
         assertEq(_goal, 50e6, "Goal not set correctly");
         assertEq(_amountRaised, 0, "Amount raised not correct");
+        assertEq(_claimed, false, "Bool not set correctly");
+        assertEq(_creator, CREATOR, "Creator not set correctly");
     }
 
     function test_createFundraiser_fail_DeadlineError() public {
@@ -203,7 +204,7 @@ contract EthFloTest is Test {
         console.log("EthFlo USDT balance after donation", USDT.balanceOf(address(ethFlo)));
         console.log("EthFlo aUSDT balance after donation", aUSDTBalance);
 
-        (,,,, uint256 amountRaised) = ethFlo.fundraisers(1);
+        (,, uint256 amountRaised,,) = ethFlo.fundraisers(1);
         console.log("Fundraiser 1 amount raised", amountRaised);
         console.log("Donor's donation amount", ethFlo.donorsAmount(DONOR, 1));
     }
