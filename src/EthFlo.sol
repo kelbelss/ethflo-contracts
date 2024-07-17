@@ -109,12 +109,12 @@ contract EthFlo is ERC20, Ownable {
 
     /**
      * @notice Initializes the EthFlo contract
-     * @param _usdtAddress The address of the USDT token contract
-     * @param _aavePool The address of the Aave lending pool
+     * @param usdtAddress The address of the USDT token contract
+     * @param aavePool The address of the Aave lending pool
      */
-    constructor(address _usdtAddress, address _aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
-        USDT = IERC20(_usdtAddress);
-        AAVE_POOL = IPool(_aavePool);
+    constructor(address usdtAddress, address aavePool) ERC20("EthFlo", "ETHFLO") Ownable(msg.sender) {
+        USDT = IERC20(usdtAddress);
+        AAVE_POOL = IPool(aavePool);
         aUSDT_ADDRESS = IERC20(IPool(AAVE_POOL).getReserveData(address(USDT)).aTokenAddress);
     }
 
