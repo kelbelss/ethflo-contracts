@@ -17,3 +17,4 @@ docs/
 fmt.txt
 
 .DS_Store
+.vscode/
